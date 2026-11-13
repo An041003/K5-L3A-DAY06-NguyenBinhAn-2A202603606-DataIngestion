@@ -1,6 +1,6 @@
 # Thông tin học viên
 
-- Họ và tên: NguyenBinhAn (theo tên repo do học viên cung cấp; họ tên có dấu: PENDING_USER)
+- Họ và tên: Nguyễn Bình An
 - MSSV: 2A202603606
 - Lớp: L3A
 - Chủ đề và corpus: Data ingestion tài liệu thiết kế KPI nội bộ, trích đoạn 42 trang; nguồn/gold/trace chỉ giữ local do chưa có quyền công bố.

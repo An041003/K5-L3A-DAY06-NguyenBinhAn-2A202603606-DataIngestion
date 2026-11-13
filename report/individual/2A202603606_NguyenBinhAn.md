@@ -1,6 +1,6 @@
 # Báo cáo cá nhân — Lab Day 06
 
-Học viên: **NguyenBinhAn — 2A202603606 — L3A** (theo tên repo được người dùng cung cấp; dấu tiếng Việt của họ tên: PENDING_USER).
+Học viên: **Nguyễn Bình An — 2A202603606 — L3A** (họ tên đã được người dùng xác nhận).
 
 Trạng thái: **PARTIAL — PENDING_HUMAN**. A/B/C đã chạy đủ; benchmark/retrieval metrics/trace và cấu hình được giữ nguyên. Người dùng đã xác nhận **30 coherence + 15 grounding**; điểm được tính từ từng nhãn, không suy ra từ text proxy. Nhãn score/evidence support là do người dùng duyệt; một số lý do trong CSV là AI đề xuất, **không coi là nhận xét do tác giả tự viết hoặc đã duyệt lý do**. Metadata 44 dòng và extraction/alternate gold vẫn PENDING_HUMAN. Chưa đủ điều kiện tuyên bố hoàn tất rubric hoặc nộp chính thức. Không push.
 
@@ -8,7 +8,7 @@ Trạng thái: **PARTIAL — PENDING_HUMAN**. A/B/C đã chạy đủ; benchmark
 
 Corpus là trích đoạn tài liệu thiết kế KPI nội bộ, một nguồn `kpi-v2`. Có **42 trang vật lý, 42 trang nội dung**, gồm trang gốc **7–17 và 81–111**; **80,942 ký tự** sau chuẩn hóa. Kiểm tra riêng từng trang: không có bìa, mục lục, trang trống hoặc trang chỉ có tài liệu tham khảo; trang 111 là ma trận truy vết nguồn–thiết kế có nội dung nghiệp vụ. Không áp ngưỡng 1.500 ký tự của text không phân trang lên PDF.
 
-SHA-256 PDF: `2a4801baffb2198686face4488c6f41b7dfa997bcc8260751170b436e2c72730`. Manifest chứa ánh xạ và số ký tự từng trang tại `data/manifest.json`. Quyền: người dùng xác nhận xử lý local, gửi chunk và 20 question text tới OpenRouter/Google ngày 13/11/2026; hai xác nhận được ghi riêng trong hồ sơ local. **Chưa có quyền tái phân phối** PDF, text, gold hoặc trace đầy đủ. Việc người chấm tiếp cận nguồn/benchmark còn PENDING_AUTHORIZED_ACCESS; số liệu tổng hợp không thay cho full trace.
+SHA-256 PDF: `2a4801baffb2198686face4488c6f41b7dfa997bcc8260751170b436e2c72730`. Manifest chứa ánh xạ và số ký tự từng trang tại `data/manifest.json`. Quyền: người dùng xác nhận xử lý local, gửi chunk và 20 question text tới OpenRouter/Google ngày 13/11/2026; xác nhận được ghi trong hồ sơ local. **Người chấm được xem dữ liệu gốc** để kiểm chứng bài, theo xác nhận mới của người dùng. Quyền xem riêng không bao gồm công bố: **chưa có quyền tái phân phối** PDF, text, gold hoặc trace đầy đủ lên GitHub. Các trạng thái access trong manifest thí nghiệm ban đầu là lịch sử; số liệu tổng hợp không thay cho full trace.
 
 RAW PDF → trích xuất từng trang → bỏ running header và nhãn trang lặp → Unicode NFC/whitespace, giữ line breaks → gán chapter và offsets → chunk A/B → embeddings API → PostgreSQL/pgvector → top-3 → proxy/nhãn review. `original_page` là page/gold_page chính thức; `pdf_page` là vị trí mở PDF rút gọn. Có khoảng trống trang 18–80 nên không lan metadata qua khoảng trống.
 
@@ -94,6 +94,6 @@ Phân tích sâu và xác nhận alternative gold vẫn PENDING_HUMAN. Đã qué
 
 Các lệnh và điều kiện dữ liệu ở README; tests chạy trên corpus thật/cache thật, không download embedding local. Source và benchmark không thể tái lập từ public checkout đơn lẻ khi chưa được cấp quyền; báo cáo công khai ghi rõ giới hạn này. Không giả định artifact tổng hợp đủ cho chấm full rubric.
 
-PENDING: **44 metadata**, alternative gold cho 20 câu, xác nhận extraction/reading order, kiểm tra shortfall C/T05, tên có dấu, quyền người chấm truy cập nguồn và quyền công bố/push. Đã xác nhận 20 gold chính + 30 coherence + 15 grounding; không tiếp tục ghi các mục này là chờ duyệt. Số tổng hợp mới ở `results/human_review_summary.json` và `results/manual_evaluation_summary.csv`; file chấm chi tiết và gói xác nhận giữ local, không commit.
+PENDING: **44 metadata**, alternative gold cho 20 câu, xác nhận extraction/reading order và quyền công bố/push. Họ tên Nguyễn Bình An và quyền người chấm xem dữ liệu gốc đã được xác nhận. C/T05 rank3 là N/A vì chỉ có2chunk trong scope, không phải mẫu còn thiếu cần chấm. Đã xác nhận 20 gold chính + 30 coherence + 15 grounding; không tiếp tục ghi các mục này là chờ duyệt. Số tổng hợp mới ở `results/human_review_summary.json` và `results/manual_evaluation_summary.csv`; file chấm chi tiết và gói xác nhận giữ local, không commit.
 
 Công cụ hỗ trợ: Codex soạn code/câu hỏi/phân tích; OpenRouter chỉ tạo embedding. Người dùng phải hiểu code và tự xác minh evidence/nhãn. Không tạo dữ liệu, vector, kết quả, nguồn hoặc nhãn thủ công giả.

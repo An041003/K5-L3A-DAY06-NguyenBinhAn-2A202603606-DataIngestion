@@ -46,7 +46,7 @@ Dùng cùng dữ liệu, model và câu hỏi cho cả ba cấu hình. Tách **1
 
 [data/format-example.json](data/format-example.json) chỉ minh họa định dạng, không phải corpus đủ điều kiện. Phần xử lý và benchmark do bạn tự hiện thực; không bắt buộc xây chatbot.
 
-## Bài triển khai cá nhân — NguyenBinhAn, 2A202603606, L3A
+## Bài triển khai cá nhân — Nguyễn Bình An, 2A202603606, L3A
 
 Python + OpenRouter `google/gemini-embedding-2`, **768 dimensions** + PostgreSQL 16/pgvector, cosine exact search. A: fixed 500/overlap 50; B: paragraph/line tối đa 1.100 ký tự; C: dùng cùng chunk/vector B, thêm section filter do câu hỏi cung cấp. Không có local/mock embeddings. Trạng thái: **PARTIAL**; đã xác nhận 20 gold chính, 30 coherence và 15 grounding; còn 44 metadata, alternative gold và extraction chờ duyệt.
 
@@ -67,6 +67,8 @@ docker compose -p day6_nguyenbinhan up -d --wait
 `starter/.env` dùng DATABASE_URL của `.env.example`, OPENROUTER_API_KEY local, model/dimensions như trên. `check_setup.py` chỉ kiểm tra hạ tầng, không phải benchmark. Docker dùng volume riêng `day6_nguyenbinhan_pg_data`, bind `127.0.0.1:55433`. Không xóa volume để xử lý lỗi setup. Dừng bằng `docker compose -p day6_nguyenbinhan stop`.
 
 Corpus KPI là **dữ liệu nội bộ không được phép công bố**. Người được cấp quyền phải chuẩn bị đúng PDF 42 trang và page map theo [manifest](data/manifest.json), cùng benchmark đã khóa. Các file này có sẵn local trong `.agents/corpus/` và `.agents/benchmark/`; public checkout không chứa chúng. Liên hệ tác giả để được đơn vị cho phép truy cập; không có URL tải công khai. Không thể tái lập full benchmark từ public checkout đơn lẻ.
+
+Người dùng đã xác nhận **người chấm được xem dữ liệu gốc** để kiểm chứng bài. Đây là quyền xem riêng, chưa cho phép công bố corpus trên GitHub.
 
 Từ `starter/`, chạy từng bước:
 
