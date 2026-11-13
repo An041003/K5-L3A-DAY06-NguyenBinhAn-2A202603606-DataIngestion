@@ -1,0 +1,17 @@
+{
+  "trace_records": 60,
+  "returned_chunk_records": 179,
+  "expected_max_chunk_records": 180,
+  "test_metadata_records": 44,
+  "manual_ratable_rows": 89,
+  "audit_shortfall_rows": 1,
+  "shortfalls": [
+    {
+      "question_id": "T05",
+      "strategy": "C",
+      "returned": 2,
+      "reason": "only two B chunks in requested section; C returns available eligible rows"
+    }
+  ],
+  "human_gold_status": "PENDING_HUMAN"
+}

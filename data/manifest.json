@@ -1,0 +1,415 @@
+{
+  "source_id": "kpi-v2",
+  "title": "Private KPI design specification, selected excerpt",
+  "source_path_or_url": ".agents/corpus/kpi_ooad_uml_selected_42p_PRIVATE.pdf",
+  "license_or_permission": "Local processing and chunk transfer to OpenRouter/Google authorized by user 2026-11-13; redistribution NOT authorized",
+  "accessed_at": "2026-11-13T09:46:47.012153+00:00",
+  "sha256": "2a4801baffb2198686face4488c6f41b7dfa997bcc8260751170b436e2c72730",
+  "physical_pages": 42,
+  "content_pages": 42,
+  "content_original_pages": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111
+  ],
+  "page_count_rule": "Inspect real PDF pages; exclude covers/TOC/blank/bibliography. All 42 selected pages contain design/rules/API or source-design trace matrix.",
+  "pages": [
+    {
+      "pdf_page": 1,
+      "original_page": 7,
+      "characters": 2572,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 2,
+      "original_page": 8,
+      "characters": 786,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 3,
+      "original_page": 9,
+      "characters": 1118,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 4,
+      "original_page": 10,
+      "characters": 2660,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 5,
+      "original_page": 11,
+      "characters": 780,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 6,
+      "original_page": 12,
+      "characters": 2000,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW",
+        "PYPDF_CONTROL_CHARACTERS_USED_PYMUPDF_FALLBACK"
+      ]
+    },
+    {
+      "pdf_page": 7,
+      "original_page": 13,
+      "characters": 2568,
+      "classification": "content",
+      "warnings": [
+        "PYPDF_CONTROL_CHARACTERS_USED_PYMUPDF_FALLBACK"
+      ]
+    },
+    {
+      "pdf_page": 8,
+      "original_page": 14,
+      "characters": 2774,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 9,
+      "original_page": 15,
+      "characters": 1380,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 10,
+      "original_page": 16,
+      "characters": 2939,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 11,
+      "original_page": 17,
+      "characters": 1080,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 12,
+      "original_page": 81,
+      "characters": 1962,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 13,
+      "original_page": 82,
+      "characters": 1917,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 14,
+      "original_page": 83,
+      "characters": 4109,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 15,
+      "original_page": 84,
+      "characters": 3110,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 16,
+      "original_page": 85,
+      "characters": 1209,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 17,
+      "original_page": 86,
+      "characters": 3581,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 18,
+      "original_page": 87,
+      "characters": 3195,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 19,
+      "original_page": 88,
+      "characters": 1732,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 20,
+      "original_page": 89,
+      "characters": 3738,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 21,
+      "original_page": 90,
+      "characters": 1060,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 22,
+      "original_page": 91,
+      "characters": 2904,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 23,
+      "original_page": 92,
+      "characters": 2462,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 24,
+      "original_page": 93,
+      "characters": 1485,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW",
+        "PYPDF_CONTROL_CHARACTERS_USED_PYMUPDF_FALLBACK"
+      ]
+    },
+    {
+      "pdf_page": 25,
+      "original_page": 94,
+      "characters": 1322,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 26,
+      "original_page": 95,
+      "characters": 1322,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 27,
+      "original_page": 96,
+      "characters": 1302,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 28,
+      "original_page": 97,
+      "characters": 1251,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 29,
+      "original_page": 98,
+      "characters": 1222,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 30,
+      "original_page": 99,
+      "characters": 1295,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 31,
+      "original_page": 100,
+      "characters": 1195,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 32,
+      "original_page": 101,
+      "characters": 1272,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 33,
+      "original_page": 102,
+      "characters": 1625,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 34,
+      "original_page": 103,
+      "characters": 991,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 35,
+      "original_page": 104,
+      "characters": 1521,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 36,
+      "original_page": 105,
+      "characters": 1418,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 37,
+      "original_page": 106,
+      "characters": 1519,
+      "classification": "content",
+      "warnings": []
+    },
+    {
+      "pdf_page": 38,
+      "original_page": 107,
+      "characters": 2663,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 39,
+      "original_page": 108,
+      "characters": 2613,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 40,
+      "original_page": 109,
+      "characters": 2270,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 41,
+      "original_page": 110,
+      "characters": 2385,
+      "classification": "content",
+      "warnings": [
+        "TABLE_READING_ORDER_REQUIRES_REVIEW"
+      ]
+    },
+    {
+      "pdf_page": 42,
+      "original_page": 111,
+      "characters": 635,
+      "classification": "content",
+      "warnings": []
+    }
+  ],
+  "characters": 80942,
+  "token_count": "Measured by provider usage at embedding time; no local tokenizer asserted",
+  "metadata": "section is explicit chapter heading plus propagation across contiguous original pages; split at chapter changes; reset across gaps",
+  "public_reproduction": "PENDING_AUTHORIZED_CORPUS_ACCESS; full source, draft gold and text traces local only"
+}

@@ -1,0 +1,10 @@
+{
+  "successful_batches": 39,
+  "inputs": 318,
+  "measured_prompt_tokens": 53406,
+  "provider_reported_cost_usd": 0.0106812,
+  "estimated_cost_usd": 0.0106812,
+  "estimate_rate_usd_per_million": 0.2,
+  "pricing_checked_date": "2026-11-13",
+  "scope": "successful document/query pipeline requests; separate public smoke excluded (2 tokens); failed unknown charges not asserted"
+}

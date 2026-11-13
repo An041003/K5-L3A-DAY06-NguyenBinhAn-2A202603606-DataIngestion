@@ -1,0 +1,28 @@
+{
+  "A": {
+    "chunks": 202,
+    "characters": 88279,
+    "min": 50,
+    "median": 500.0,
+    "max": 500,
+    "unknown_section_chunks": 0
+  },
+  "B": {
+    "chunks": 104,
+    "characters": 80880,
+    "min": 50,
+    "median": 1010.5,
+    "max": 1098,
+    "unknown_section_chunks": 0
+  },
+  "C": {
+    "chunks": 104,
+    "characters": 80880,
+    "min": 50,
+    "median": 1010.5,
+    "max": 1098,
+    "unknown_section_chunks": 0,
+    "reuse": "B exact rows/vectors"
+  },
+  "prepare_seconds": 1.1180621999083087
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "strategy": "A",
+    "queries": 20,
+    "search_sum_seconds": 0.45611180004198104,
+    "search_median_seconds": 0.021570299984887242,
+    "note": "local client wall time includes database connection; shared query embedding timed separately in private trace"
+  },
+  {
+    "strategy": "B",
+    "queries": 20,
+    "search_sum_seconds": 0.45918599993456155,
+    "search_median_seconds": 0.019208749989047647,
+    "note": "local client wall time includes database connection; shared query embedding timed separately in private trace"
+  },
+  {
+    "strategy": "C",
+    "queries": 20,
+    "search_sum_seconds": 0.4433880001306534,
+    "search_median_seconds": 0.019601550011429936,
+    "note": "local client wall time includes database connection; shared query embedding timed separately in private trace"
+  }
+]

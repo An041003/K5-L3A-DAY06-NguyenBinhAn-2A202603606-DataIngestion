@@ -1,0 +1,14 @@
+{
+  "method": "restart own Docker container; reconnect and compare ordered ID hashes",
+  "status": "PASS",
+  "counts": {
+    "A": 202,
+    "B": 104
+  },
+  "ids_equal_before_restart": true,
+  "backend": {
+    "postgresql": "16.16 (Debian 16.16-1.pgdg12+1)",
+    "pgvector": "0.8.7",
+    "search": "exact cosine; no ANN index"
+  }
+}

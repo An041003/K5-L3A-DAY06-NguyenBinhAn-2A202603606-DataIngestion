@@ -45,3 +45,63 @@ Dùng cùng dữ liệu, model và câu hỏi cho cả ba cấu hình. Tách **1
 | Cách nộp bài | [SUBMISSION.md](SUBMISSION.md) |
 
 [data/format-example.json](data/format-example.json) chỉ minh họa định dạng, không phải corpus đủ điều kiện. Phần xử lý và benchmark do bạn tự hiện thực; không bắt buộc xây chatbot.
+
+## Bài triển khai cá nhân — NguyenBinhAn, 2A202603606, L3A
+
+Python + OpenRouter `google/gemini-embedding-2`, **768 dimensions** + PostgreSQL 16/pgvector, cosine exact search. A: fixed 500/overlap 50; B: paragraph/line tối đa 1.100 ký tự; C: dùng cùng chunk/vector B, thêm section filter do câu hỏi cung cấp. Không có local/mock embeddings. Trạng thái bài: **PARTIAL, chờ người dùng duyệt gold và audit thủ công**.
+
+### Cài đặt và chạy
+
+Từ repo root, trên Windows PowerShell:
+
+```powershell
+python -m venv starter/.venv
+starter/.venv/Scripts/python -m pip install -r starter/requirements.txt
+# Chỉ copy nếu chưa có .env; điền key thật trực tiếp trên máy, không đưa vào Git.
+if (!(Test-Path starter/.env)) { Copy-Item starter/.env.example starter/.env }
+cd starter
+docker compose -p day6_nguyenbinhan up -d --wait
+.venv/Scripts/python scripts/check_setup.py
+```
+
+`starter/.env` dùng DATABASE_URL của `.env.example`, OPENROUTER_API_KEY local, model/dimensions như trên. `check_setup.py` chỉ kiểm tra hạ tầng, không phải benchmark. Docker dùng volume riêng `day6_nguyenbinhan_pg_data`, bind `127.0.0.1:55433`. Không xóa volume để xử lý lỗi setup. Dừng bằng `docker compose -p day6_nguyenbinhan stop`.
+
+Corpus KPI là **dữ liệu nội bộ không được phép công bố**. Người được cấp quyền phải chuẩn bị đúng PDF 42 trang và page map theo [manifest](data/manifest.json), cùng benchmark đã khóa. Các file này có sẵn local trong `.agents/corpus/` và `.agents/benchmark/`; public checkout không chứa chúng. Liên hệ tác giả để được đơn vị cho phép truy cập; không có URL tải công khai. Không thể tái lập full benchmark từ public checkout đơn lẻ.
+
+Từ `starter/`, chạy từng bước:
+
+```powershell
+.venv/Scripts/python -m src.run prepare
+.venv/Scripts/python -m src.run lock
+# Chỉ dùng --allow-external khi có quyền gửi chunk VÀ question text tới provider.
+.venv/Scripts/python -m src.run ingest --allow-external
+# Gold đang chờ người duyệt: chỉ đo proxy tạm thời, không nhận là human-verified.
+.venv/Scripts/python -m src.run benchmark --allow-external --allow-unverified
+.venv/Scripts/python -m src.run report
+```
+
+Sau khi các đầu vào đã được cấp quyền và có benchmark local, lệnh tổng hợp tương đương:
+
+```powershell
+.venv/Scripts/python -m src.run --allow-external --allow-unverified
+```
+
+Model/dimensions/cosine được giữ cố định. Lock kiểm tra hash câu hỏi, cấu hình, chunks và vị trí audit; không sửa để retune test. Dev chọn theo Evidence Hit@3, rồi Hit@1, số chunk, thứ tự strategy; ghi lựa chọn trước test retrieval. Cache local tái sử dụng text trùng và query vectors; C không gọi embedding document riêng. Timeout/401/402/quota/backend lỗi sẽ báo rõ và dừng bước phụ thuộc, không chuyển provider.
+
+### Kết quả và kiểm chứng
+
+- [Báo cáo cá nhân](report/individual/2A202603606_NguyenBinhAn.md): cấu hình, phép đo, năm khía cạnh, ví dụ lỗi và giới hạn.
+- [Metrics dev/test](results/metrics.csv), [chunk statistics](results/chunk_statistics.json), [ingest statistics](results/ingest_statistics.json), [API usage](results/api_usage_summary.json), [experiment log](artifacts/experiment_log.csv).
+- [Backend verification](results/storage_verification.json), [persistence sau restart](results/persistence_verification.json), [runtime](results/run_environment.json), [failure summary](results/failure_summary.json), [search timing](results/search_timing.json).
+- Trace đầy đủ local: `.agents/results/traces.jsonl`; draft gold/review: `.agents/review/gold_review.csv`; 89 mẫu coherence/metadata/grounding và 1 dòng thiếu kết quả: `.agents/review/manual_audit_template.csv`. C/T05 chỉ có 2 chunk thuộc phạm vi lọc, tổng 60 trace có 179 kết quả thực; không tạo hit thứ ba. Không có nhãn người chấm được AI tự điền; chưa commit nguồn, câu hỏi/gold hoặc text trace.
+- [Benchmark manifest](benchmark/manifest.json) ghi split/hash và phạm vi review; [rerun verification](results/reproducibility.json) ghi kiểm tra kết quả lần chạy lại. `ingest_statistics.json` giữ phép đo ingest đầu tiên; `ingest_latest.json` ghi lần nạp lại bằng cache.
+
+`Hit@1`/`Evidence Hit@3` hiện là **PROVISIONAL exact-quote proxy trên gold chưa được người dùng duyệt**: phải đúng nguồn/trang và chứa toàn bộ quote trong một chunk. Các nguồn tương đương chưa được xác nhận có thể làm proxy đánh giá thấp; proxy không thay nhãn grounding/coherence. Metadata filter compliance tự động không chứng minh độ đúng metadata thủ công.
+
+Chạy technical tests từ repo root (đọc corpus/cache thật, không gọi API):
+
+```powershell
+starter/.venv/Scripts/python -m unittest discover -s tests -v
+```
+
+Các test cần dữ liệu nội bộ sẽ báo skip nếu checkout chưa được cấp corpus/cache. Không dùng việc skip để tuyên bố pipeline đã được kiểm chứng. Thông số API và giá tham chiếu: [OpenRouter endpoint](https://openrouter.ai/docs/api/api-reference/embeddings/submit-an-embedding-request), [model](https://openrouter.ai/google/gemini-embedding-2); SQL metric theo [pgvector](https://github.com/pgvector/pgvector).

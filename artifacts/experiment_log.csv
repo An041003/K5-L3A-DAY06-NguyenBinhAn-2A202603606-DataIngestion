@@ -1,4 +1,4 @@
 strategy,chunking,chunk_size,overlap,metadata,filter,vectorizer,hypothesis,dev_hit1,dev_hit3,test_hit1,test_hit3,notes
-A,,,,,,,,,,,,
-B,,,,,,,,,,,,
-C,,,,,,,,,,,,
+A,fixed,500,50,"document_id,source,original_page,pdf_page,section,source_offsets,heading_provenance",none,OpenRouter google/gemini-embedding-2 / 768 / pgvector cosine exact,Short overlapping windows provide localized retrieval but may split conditions.,6/15,11/15,2/5,2/5,PROVISIONAL exact-quote proxy; human gold/manual review PENDING; C shares B vectors; no test retuning
+B,"paragraph/line, chapter bounded",1100,0,"document_id,source,original_page,pdf_page,section,source_offsets,heading_provenance",none,OpenRouter google/gemini-embedding-2 / 768 / pgvector cosine exact,Larger source-bounded paragraph/line groups may preserve evidence at increased per-chunk length.,7/15,12/15,2/5,3/5,PROVISIONAL exact-quote proxy; human gold/manual review PENDING; C shares B vectors; no test retuning
+C,"paragraph/line, chapter bounded",1100,0,"document_id,source,original_page,pdf_page,section,source_offsets,heading_provenance",question-supplied section in SQL,OpenRouter google/gemini-embedding-2 / 768 / pgvector cosine exact,Source-proven question scope may remove off-scope hits; wrong input scope can exclude valid evidence.,8/15,12/15,2/5,3/5,PROVISIONAL exact-quote proxy; human gold/manual review PENDING; C shares B vectors; no test retuning

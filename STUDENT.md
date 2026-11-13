@@ -1,8 +1,8 @@
 # Thông tin học viên
 
-- Họ và tên:
-- MSSV:
-- Lớp: L3A / L3B / khác:
-- Chủ đề và corpus:
-- Repo bài nộp:
-- Commit chốt bài:
+- Họ và tên: NguyenBinhAn (theo tên repo do học viên cung cấp; họ tên có dấu: PENDING_USER)
+- MSSV: 2A202603606
+- Lớp: L3A
+- Chủ đề và corpus: Data ingestion tài liệu thiết kế KPI nội bộ, trích đoạn 42 trang; nguồn/gold/trace chỉ giữ local do chưa có quyền công bố.
+- Repo bài nộp: https://github.com/An041003/K5-L3A-DAY06-NguyenBinhAn-2A202603606-DataIngestion
+- Commit chốt bài: PENDING_HUMAN_REVIEW (commit hiện hành có thể xem bằng git log -1; chưa push hoặc nộp chính thức)

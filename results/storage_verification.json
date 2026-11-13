@@ -1,0 +1,19 @@
+{
+  "scope": "Technical integration only, never benchmark data or human labels",
+  "backend": {
+    "postgresql": "16.16 (Debian 16.16-1.pgdg12+1)",
+    "pgvector": "0.8.7",
+    "search": "exact cosine; no ANN index"
+  },
+  "A": {
+    "rows": 202,
+    "stale_id_removal_and_full_restore": "PASS",
+    "ids_sha256": "d8c9a55e35d0f09f45de7d19e0b2985a6b2e83bb30a1f92d3c9c8ef166dd2e72"
+  },
+  "B": {
+    "rows": 104,
+    "stale_id_removal_and_full_restore": "PASS",
+    "ids_sha256": "5146b68e75c993d1ddd7778c103207607a80c805d7d47e3944dede687f62782e"
+  },
+  "invalid_filters": "PASS"
+}

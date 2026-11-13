@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "command": "starter/.venv/Scripts/python -m unittest discover -s tests -v",
+  "tests_run": 14,
+  "failures": 0,
+  "skipped": 0,
+  "checks": [
+    "original page mapping",
+    "parser fallback",
+    "stable chunk identities",
+    "exact source spans",
+    "chapter boundaries",
+    "nonspace character preservation",
+    "locked benchmark evidence",
+    "strict full-quote proxy",
+    "dev/test metric denominators",
+    "768-dimensional real cached vectors",
+    "C/B unfiltered ranking equivalence",
+    "SQL filter scope and real result shortfall"
+  ],
+  "source_fixtures": "actual authorized private source and real API cache, intentionally not distributed",
+  "storage_checks": "results/storage_verification.json",
+  "persistence_checks": "results/persistence_verification.json",
+  "human_review": "PENDING_HUMAN"
+}

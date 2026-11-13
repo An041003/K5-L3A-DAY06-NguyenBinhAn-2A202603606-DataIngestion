@@ -1,0 +1,358 @@
+[
+  {
+    "question_id": "D01",
+    "split": "dev",
+    "strategy": "A",
+    "source_id": "kpi-v2",
+    "original_gold_page": 7,
+    "top3_original_pages": [
+      93,
+      106,
+      105
+    ],
+    "gold_offsets": [
+      2088,
+      2155
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D06",
+    "split": "dev",
+    "strategy": "A",
+    "source_id": "kpi-v2",
+    "original_gold_page": 12,
+    "top3_original_pages": [
+      105,
+      106,
+      103
+    ],
+    "gold_offsets": [
+      1608,
+      1759
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D06",
+    "split": "dev",
+    "strategy": "B",
+    "source_id": "kpi-v2",
+    "original_gold_page": 12,
+    "top3_original_pages": [
+      103,
+      105,
+      95
+    ],
+    "gold_offsets": [
+      1608,
+      1759
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D06",
+    "split": "dev",
+    "strategy": "C",
+    "source_id": "kpi-v2",
+    "original_gold_page": 12,
+    "top3_original_pages": [
+      103,
+      105,
+      95
+    ],
+    "gold_offsets": [
+      1608,
+      1759
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D10",
+    "split": "dev",
+    "strategy": "A",
+    "source_id": "kpi-v2",
+    "original_gold_page": 17,
+    "top3_original_pages": [
+      106,
+      17,
+      106
+    ],
+    "gold_offsets": [
+      412,
+      533
+    ],
+    "returned_gold_page_offsets": [
+      [
+        451,
+        740
+      ]
+    ],
+    "technical_failure": "COMPLETE_QUOTE_NOT_IN_SINGLE_RETURNED_CHUNK",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D12",
+    "split": "dev",
+    "strategy": "B",
+    "source_id": "kpi-v2",
+    "original_gold_page": 82,
+    "top3_original_pages": [
+      84,
+      84,
+      10
+    ],
+    "gold_offsets": [
+      412,
+      484
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D12",
+    "split": "dev",
+    "strategy": "C",
+    "source_id": "kpi-v2",
+    "original_gold_page": 82,
+    "top3_original_pages": [
+      84,
+      84,
+      10
+    ],
+    "gold_offsets": [
+      412,
+      484
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D14",
+    "split": "dev",
+    "strategy": "A",
+    "source_id": "kpi-v2",
+    "original_gold_page": 88,
+    "top3_original_pages": [
+      88,
+      89,
+      88
+    ],
+    "gold_offsets": [
+      1220,
+      1550
+    ],
+    "returned_gold_page_offsets": [
+      [
+        1351,
+        1732
+      ],
+      [
+        900,
+        1400
+      ]
+    ],
+    "technical_failure": "COMPLETE_QUOTE_NOT_IN_SINGLE_RETURNED_CHUNK",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D15",
+    "split": "dev",
+    "strategy": "B",
+    "source_id": "kpi-v2",
+    "original_gold_page": 93,
+    "top3_original_pages": [
+      105,
+      105,
+      106
+    ],
+    "gold_offsets": [
+      481,
+      588
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "D15",
+    "split": "dev",
+    "strategy": "C",
+    "source_id": "kpi-v2",
+    "original_gold_page": 93,
+    "top3_original_pages": [
+      105,
+      105,
+      106
+    ],
+    "gold_offsets": [
+      481,
+      588
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "T01",
+    "split": "test",
+    "strategy": "A",
+    "source_id": "kpi-v2",
+    "original_gold_page": 103,
+    "top3_original_pages": [
+      107,
+      85,
+      87
+    ],
+    "gold_offsets": [
+      216,
+      325
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "T01",
+    "split": "test",
+    "strategy": "B",
+    "source_id": "kpi-v2",
+    "original_gold_page": 103,
+    "top3_original_pages": [
+      85,
+      86,
+      87
+    ],
+    "gold_offsets": [
+      216,
+      325
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "T01",
+    "split": "test",
+    "strategy": "C",
+    "source_id": "kpi-v2",
+    "original_gold_page": 103,
+    "top3_original_pages": [
+      85,
+      86,
+      87
+    ],
+    "gold_offsets": [
+      216,
+      325
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "T02",
+    "split": "test",
+    "strategy": "A",
+    "source_id": "kpi-v2",
+    "original_gold_page": 105,
+    "top3_original_pages": [
+      105,
+      105,
+      104
+    ],
+    "gold_offsets": [
+      440,
+      611
+    ],
+    "returned_gold_page_offsets": [
+      [
+        450,
+        950
+      ],
+      [
+        0,
+        500
+      ]
+    ],
+    "technical_failure": "COMPLETE_QUOTE_NOT_IN_SINGLE_RETURNED_CHUNK",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "T03",
+    "split": "test",
+    "strategy": "A",
+    "source_id": "kpi-v2",
+    "original_gold_page": 106,
+    "top3_original_pages": [
+      100,
+      86,
+      102
+    ],
+    "gold_offsets": [
+      990,
+      1163
+    ],
+    "returned_gold_page_offsets": [],
+    "technical_failure": "GOLD_PAGE_NOT_IN_TOP3",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "T03",
+    "split": "test",
+    "strategy": "B",
+    "source_id": "kpi-v2",
+    "original_gold_page": 106,
+    "top3_original_pages": [
+      106,
+      105,
+      100
+    ],
+    "gold_offsets": [
+      990,
+      1163
+    ],
+    "returned_gold_page_offsets": [
+      [
+        1082,
+        1519
+      ]
+    ],
+    "technical_failure": "COMPLETE_QUOTE_NOT_IN_SINGLE_RETURNED_CHUNK",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  },
+  {
+    "question_id": "T03",
+    "split": "test",
+    "strategy": "C",
+    "source_id": "kpi-v2",
+    "original_gold_page": 106,
+    "top3_original_pages": [
+      106,
+      105,
+      100
+    ],
+    "gold_offsets": [
+      990,
+      1163
+    ],
+    "returned_gold_page_offsets": [
+      [
+        1082,
+        1519
+      ]
+    ],
+    "technical_failure": "COMPLETE_QUOTE_NOT_IN_SINGLE_RETURNED_CHUNK",
+    "human_evidence_judgment": "PENDING_HUMAN"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "strategy": "A",
+    "test_filter_queries": 2,
+    "returned_hits_match_requested_scope": 2,
+    "full_top3_matches_requested_scope": 2,
+    "queries_with_three_results": 2,
+    "note": "Scope correctness and top-3 completeness reported separately; human metadata accuracy PENDING; A/B do not apply filters"
+  },
+  {
+    "strategy": "B",
+    "test_filter_queries": 2,
+    "returned_hits_match_requested_scope": 1,
+    "full_top3_matches_requested_scope": 1,
+    "queries_with_three_results": 2,
+    "note": "Scope correctness and top-3 completeness reported separately; human metadata accuracy PENDING; A/B do not apply filters"
+  },
+  {
+    "strategy": "C",
+    "test_filter_queries": 2,
+    "returned_hits_match_requested_scope": 2,
+    "full_top3_matches_requested_scope": 1,
+    "queries_with_three_results": 1,
+    "note": "Scope correctness and top-3 completeness reported separately; human metadata accuracy PENDING; A/B do not apply filters"
+  }
+]

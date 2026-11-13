@@ -1,0 +1,43 @@
+{
+  "status": "PROVISIONAL_PENDING_HUMAN",
+  "questions": 20,
+  "dev": 15,
+  "test": 5,
+  "filter_queries": 5,
+  "test_filter_queries": 2,
+  "filtered_question_ids": [
+    "D08",
+    "D11",
+    "D14",
+    "T04",
+    "T05"
+  ],
+  "benchmark_sha256": "62026ea23cbc82df48d3c410e6f6879050470df694d5de33fe9bc6eb2e39154c",
+  "locked_at_utc": "2026-11-13T09:34:32.417045+00:00",
+  "selection_criteria": "Max dev complete-quote Evidence Hit@3, then Hit@1, then fewer stored chunks, then strategy alphabetically. Human quality metrics remain PENDING; decision provisional.",
+  "technically_matched_evidence_spans": 20,
+  "human_verified_gold": 0,
+  "source_id": "kpi-v2",
+  "redistribution": "NOT_AUTHORIZED",
+  "question_and_gold_path_local_only": ".agents/benchmark/questions.jsonl",
+  "traces_path_local_only": ".agents/results/traces.jsonl",
+  "access": "PENDING_AUTHORIZED_ACCESS: reviewer must obtain source-owner permission and contact author; public checkout cannot reproduce private questions/gold",
+  "required_question_fields": [
+    "id",
+    "split",
+    "question",
+    "expected_answer",
+    "gold_source_id",
+    "gold_page",
+    "evidence_quote",
+    "filter"
+  ],
+  "source_page_identity": "original_page; pdf_page retained for navigation",
+  "split_risk": "Same document and shared vocabulary; predefined topics, no retrieval-driven test retuning",
+  "test_selection_snapshot": {
+    "at": "2026-11-13T09:46:50.285399+00:00",
+    "selected": "C",
+    "test_retrieval_started": false,
+    "status": "PROVISIONAL_PENDING_HUMAN"
+  }
+}

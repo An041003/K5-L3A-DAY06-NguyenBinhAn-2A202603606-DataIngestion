@@ -1,0 +1,30 @@
+{
+  "A": {
+    "chunks": 202,
+    "embedding_seconds": 0.1192964999936521,
+    "first_write_seconds": 0.20986639999318868,
+    "ingest_seconds": 0.3291628999868408,
+    "second_write_seconds": 0.20475849998183548,
+    "idempotent": true,
+    "ids_sha256": "d8c9a55e35d0f09f45de7d19e0b2985a6b2e83bb30a1f92d3c9c8ef166dd2e72"
+  },
+  "B": {
+    "chunks": 104,
+    "embedding_seconds": 0.06517259997781366,
+    "first_write_seconds": 0.11416360002476722,
+    "ingest_seconds": 0.17933620000258088,
+    "second_write_seconds": 0.1432545999996364,
+    "idempotent": true,
+    "ids_sha256": "5146b68e75c993d1ddd7778c103207607a80c805d7d47e3944dede687f62782e"
+  },
+  "C": {
+    "reuse": "B exact persisted rows and vectors",
+    "extra_document_embedding_requests": 0
+  },
+  "backend": {
+    "postgresql": "16.16 (Debian 16.16-1.pgdg12+1)",
+    "pgvector": "0.8.7",
+    "search": "exact cosine; no ANN index"
+  },
+  "at": "2026-11-13T09:46:49.136517+00:00"
+}

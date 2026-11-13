@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "method": "full CLI rerun on locked corpus/config/questions; cached real provider vectors",
+  "trace_records": 60,
+  "returned_chunk_records": 179,
+  "ordered_hits_scores_metadata_and_evaluation_identical": true,
+  "new_embedding_requests_on_cached_rerun": 0,
+  "total_successful_api_requests_before_and_after": 39,
+  "source_benchmark_unchanged": true,
+  "benchmark_sha256": "62026ea23cbc82df48d3c410e6f6879050470df694d5de33fe9bc6eb2e39154c",
+  "manual_labels": "PENDING_HUMAN",
+  "test_retuning": "NONE; posttest output accounting correction only"
+}
