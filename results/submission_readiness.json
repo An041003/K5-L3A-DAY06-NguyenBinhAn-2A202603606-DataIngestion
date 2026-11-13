@@ -1,0 +1,60 @@
+{
+  "status": "READY",
+  "scope": "Safe local submission preparation; not published/pushed or delivered",
+  "blockers": [],
+  "new_embedding_calls": 0,
+  "benchmark_rerun": false,
+  "retroactive_rescoring": false,
+  "checks": {
+    "protected_original_artifacts": 356,
+    "all_protected_hashes_unchanged": true,
+    "report_metric_trace_review_consistent": true,
+    "trace_queries": 60,
+    "returned_chunks": 179,
+    "gold_confirmed": 20,
+    "coherence_confirmed": 30,
+    "grounding_confirmed": 15,
+    "metadata_user_accepted_technical": 44,
+    "metadata_independently_human_scored": false,
+    "extraction_warning_pages_retained": 29,
+    "tracked_staged_files_privacy_scanned": 63,
+    "usage_ledger_consistent": true,
+    "readme_links_valid": true,
+    "manifest_corpus_consistent": true,
+    "experiment_log_metrics_consistent": true
+  },
+  "reporting_source_sha256_utf8_lf": {
+    "starter/src/chunking.py": "55acac672a0f2387424b731cdee79f5aa31501cc9633791dc9e17033a2070776",
+    "starter/src/embeddings.py": "32da72901f7ec2ba1c30835817033f5f208c7690754c12834a8bfec7569812ba",
+    "starter/src/evaluation.py": "48a0a7e21f3e2d766fd64a9211930a89361d7ff1ed24af64da5af7cab3171310",
+    "starter/src/human_review.py": "9981b01e2dc508f28de9e0553035059379ae214f698c6d9ea3d413d0fbe73fa2",
+    "starter/src/ingestion.py": "1504b73d2f9f8ff2b528716e94f9e0bffafd3b5d9e4557080878b3b69b351a45",
+    "starter/src/io_utils.py": "df9445e78865bcabef67167fc83e799e659ec89624c2b1acd99c468b282bf558",
+    "starter/src/models.py": "5380cd16fcd0d4396db5dda3a205c148c148a5fd6e90b90d060dd546e39bb68d",
+    "starter/src/reporting.py": "ad7b735f2529f68a09d74a98617da5915b29e751ac42f0e661dbfd9391e634d6",
+    "starter/src/run.py": "7851f5c59dc3298114bfe386682879985df55496a71f6f80d64ef9237665a2fc",
+    "starter/src/store.py": "9fa470b2390dc4cf543e4a09be6b21d9cddd553707c829fd8a137d937db30321",
+    "starter/src/submission.py": "725adb1c54ff2eee1aaf976602342c435d96d244034ec3113e7ee081114a8df7",
+    "starter/src/__init__.py": "86b6f304b218783f00e27c050a111049f5dc07fd98194c556deb0633d7c8980a"
+  },
+  "benchmark_sha256": "62026ea23cbc82df48d3c410e6f6879050470df694d5de33fe9bc6eb2e39154c",
+  "selected_strategy": "C",
+  "rubric_evidence": {
+    "corpus_processing": "PRESENT",
+    "three_strategies_and_storage": "PRESENT",
+    "benchmark_retrieval": "PRESENT_WITH_PRIVATE_ACCESS",
+    "five_evaluation_aspects": "PRESENT_WITH_METADATA_METHOD_LIMITATION",
+    "reproducibility_and_report": "PRESENT_WITH_RESTRICTED_CORPUS_ACCESS"
+  },
+  "limitations": [
+    "Metadata accepted technical verification, not independent manual per-chunk scoring; rubric credit is grader decision",
+    "29 extraction-warning pages retained, not exhaustively human-verified",
+    "Public checkout lacks restricted source/gold/full traces",
+    "78 alternate chunks qualitative only; D10/page106 remains PENDING and not official gold",
+    "Test set has only five questions"
+  ],
+  "reviewer_access": "User authorized private source viewing; see data/ACCESS.md",
+  "source_gold_trace_publication_authorized": false,
+  "push_authorized": false,
+  "final_report": "report/individual/2A202603606_NguyenBinhAn.md"
+}

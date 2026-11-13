@@ -83,4 +83,57 @@ def aggregate_human_review(root):
     summary['extraction'] = {'warning_pages':extraction.get('warning_pages_checked'),'human_confirmed':0,
         'ai_visual_reviewed_original_pages':extraction.get('ai_visual_reviewed_original_pages',[]),'status':'PENDING_HUMAN'}
     summary['retrieval_policy'] = 'Original exact-quote metrics, traces, benchmark and A/B/C unchanged; no alternate-gold rescoring or embedding calls'
+    final_path = review/'final_review_decisions.json'
+    if final_path.exists():
+        final = json.loads(final_path.read_text(encoding='utf-8'))
+        accepted_status = 'USER_ACCEPTED_TECHNICAL_VERIFICATION'
+        if final['metadata']['status']!=accepted_status or final['metadata']['independent_human_scoring'] is not False:
+            raise ValueError('Final metadata decision must preserve technical-verification provenance')
+        full_metadata = _csv(review/'metadata_review_44.csv')
+        traces = read_jsonl(private/'results/traces.jsonl')
+        expected = {(t['id'],t['strategy'],str(rank)):h for t in traces if t['split']=='test' for rank,h in enumerate(t['hits'],1)}
+        if len(full_metadata)!=44 or len(expected)!=44 or len(metadata)!=44:
+            raise ValueError('Final metadata population differs from frozen test hits')
+        if len({(r['id'],r['strategy'],r['rank']) for r in full_metadata})!=44:
+            raise ValueError('Duplicate metadata acceptance keys')
+        for r in full_metadata:
+            hit = expected[(r['id'],r['strategy'],r['rank'])]
+            checks = {'document_id':hit['document_id'],'source':hit['source'],'page':str(hit['page']),
+                'pdf_page':str(hit['metadata']['pdf_page']),'original_page':str(hit['metadata']['original_page']),
+                'section':hit['metadata']['section'],'text':hit['text']}
+            if any(r[k]!=v for k,v in checks.items()):
+                raise ValueError('Accepted metadata differs from frozen trace')
+            if r['verification_status']!=accepted_status or r['human_verified'].lower()!='false':
+                raise ValueError('Technical acceptance must not become independent human scoring')
+        by_strategy = {s:{'accepted':sum(r['strategy']==s for r in full_metadata),
+                          'total':sum(r['strategy']==s for r in full_metadata)} for s in ('A','B','C')}
+        if by_strategy!=final['metadata']['by_strategy'] or final['metadata']['accepted']!=44:
+            raise ValueError('Final metadata counts disagree with accepted population')
+        if technical.get('source_trace_checks_pass')!=44 or technical.get('database_matches')!=44:
+            raise ValueError('Accepted technical check evidence incomplete')
+        source_manifest = json.loads((root/'data/manifest.json').read_text(encoding='utf-8'))
+        warning_rows = [p for p in source_manifest['pages'] if p['warnings']]
+        table_pages = [p['original_page'] for p in warning_rows if 'TABLE_READING_ORDER_REQUIRES_REVIEW' in p['warnings']]
+        fallback_pages = [p['original_page'] for p in warning_rows if any('FALLBACK' in w for w in p['warnings'])]
+        extraction_rows = _csv(review/'extraction_review.csv')
+        if len(warning_rows)!=29 or len(table_pages)!=28 or fallback_pages!=[12,13,93]:
+            raise ValueError('Source warnings changed after acceptance')
+        if len(extraction_rows)!=29 or any(r['human_verified'].lower()=='true' for r in extraction_rows):
+            raise ValueError('Do not clear or human-verify unreviewed extraction pages')
+        if final['extraction']['status']!='USER_ACCEPTED_WITH_DISCLOSED_LIMITATIONS' or final['extraction']['all_pages_human_verified'] is not False:
+            raise ValueError('Extraction acceptance must preserve disclosed limits')
+        if final['alternative_gold']['official_additions']!=0 or final['alternative_gold']['D10_page106_status']!='PENDING':
+            raise ValueError('Unconfirmed alternate evidence cannot become official gold')
+        summary['status'] = 'FINAL_REVIEW_ACCEPTED_WITH_LIMITATIONS'
+        summary['final_decision_sha256'] = digest(final_path.read_bytes())
+        summary['metadata'].update(status=accepted_status,user_accepted_technical=44,
+            by_strategy=by_strategy,independent_human_scoring=False,
+            fields=final['metadata']['fields'],rubric_method_limit='Accepted technical verification; not independent manual per-chunk audit')
+        summary['extraction'].update(status='USER_ACCEPTED_WITH_DISCLOSED_LIMITATIONS',
+            table_reading_order_warning_pages=28,parser_fallback_original_pages=fallback_pages,
+            warning_pages_retained=29,all_pages_human_verified=False,error_free_claim=False)
+        summary['gold_alternatives'].update(status='QUALITATIVE_ONLY_NO_RETROSPECTIVE_RESCORING',
+            candidate_chunks=78,official_additions=0,D10_page106_status='PENDING',submission_blocker=False)
+        summary['gold']['alternatives_status'] = summary['gold_alternatives']['status']
+        summary['permissions'] = final['permissions']
     return summary

@@ -1,0 +1,13 @@
+{
+  "status": "MEASURED",
+  "measured_at_utc": "2026-11-13T12:03:16.430030+00:00",
+  "method": "read-only PostgreSQL count and pg_total_relation_size, no vector search",
+  "database_rows": 306,
+  "rows_by_strategy": {
+    "A": 202,
+    "B": 104
+  },
+  "pg_total_relation_bytes": 5070848,
+  "cpu_ram_peak": "NOT_MEASURED",
+  "new_embedding_calls": 0
+}

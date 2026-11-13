@@ -23,11 +23,16 @@ class HumanReviewTests(unittest.TestCase):
             self.assertEqual(summary['grounding'][s]['mean'],1.8)
             self.assertEqual(summary['grounding'][s]['distribution'],{'0':0,'1':1,'2':4})
 
-    def test_unconfirmed_scopes_remain_pending(self):
+    def test_technical_acceptance_is_not_independent_human_verification(self):
         summary=aggregate_human_review(ROOT)
         for kind in ('metadata','gold_alternatives','extraction'):
             self.assertEqual(summary[kind]['human_confirmed'],0)
-            self.assertEqual(summary[kind]['status'],'PENDING_HUMAN')
+        self.assertEqual(summary['metadata']['status'],'USER_ACCEPTED_TECHNICAL_VERIFICATION')
+        self.assertEqual(summary['metadata']['user_accepted_technical'],44)
+        self.assertFalse(summary['metadata']['independent_human_scoring'])
+        self.assertEqual(summary['extraction']['status'],'USER_ACCEPTED_WITH_DISCLOSED_LIMITATIONS')
+        self.assertEqual(summary['gold_alternatives']['D10_page106_status'],'PENDING')
+        self.assertEqual(summary['gold_alternatives']['official_additions'],0)
         self.assertEqual(summary['metadata']['rows'],44)
         self.assertEqual(summary['metadata']['technical_source_trace_matches'],44)
         self.assertEqual(summary['metadata']['technical_database_matches'],44)
@@ -38,12 +43,12 @@ class HumanReviewTests(unittest.TestCase):
             with self.subTest(path=name):
                 self.assertEqual(digest((ROOT/name).read_bytes()),expected)
 
-    def test_csv_has_45_confirmed_labels_and_44_pending_metadata(self):
+    def test_csv_has_45_confirmed_labels_and_44_accepted_technical_records(self):
         with (ROOT/'.agents/review/manual_audit_template.csv').open(encoding='utf-8-sig',newline='') as f:
             rows=list(csv.DictReader(f))
         self.assertEqual(len(rows),90)
         self.assertEqual(sum(r['human_verified'].lower()=='true' for r in rows),45)
-        self.assertEqual(sum(r['kind']=='metadata' and r['human_verified'].lower()=='false' and r['score']=='PENDING_HUMAN' for r in rows),44)
+        self.assertEqual(sum(r['kind']=='metadata' and r['human_verified'].lower()=='false' and r['label_origin']=='USER_ACCEPTED_TECHNICAL_VERIFICATION' for r in rows),44)
         shortfall=[r for r in rows if r['kind']=='retrieval_shortfall']
         self.assertEqual(len(shortfall),1)
         self.assertEqual(shortfall[0]['score'],'NOT_APPLICABLE')
@@ -51,6 +56,22 @@ class HumanReviewTests(unittest.TestCase):
 
     def test_missing_approval_packet_never_creates_scores(self):
         self.assertIsNone(aggregate_human_review(ROOT/'.agents/nonexistent_review_root'))
+
+    def test_extraction_acceptance_retains_all_warnings(self):
+        summary=aggregate_human_review(ROOT)
+        self.assertEqual(summary['extraction']['warning_pages_retained'],29)
+        self.assertEqual(summary['extraction']['table_reading_order_warning_pages'],28)
+        self.assertEqual(summary['extraction']['parser_fallback_original_pages'],[12,13,93])
+        self.assertFalse(summary['extraction']['all_pages_human_verified'])
+        self.assertFalse(summary['extraction']['error_free_claim'])
+
+    def test_user_finalization_preserves_all_45_scores_and_comments(self):
+        receipt=json.loads((ROOT/'.agents/review/finalization_receipt.json').read_text(encoding='utf-8'))
+        with (ROOT/'.agents/review/manual_audit_template.csv').open(encoding='utf-8-sig',newline='') as f:
+            rows=[r for r in csv.DictReader(f) if r['kind'] in ('coherence','grounding')]
+        self.assertEqual(len(rows),45)
+        self.assertEqual(digest(json.dumps(rows,ensure_ascii=False,sort_keys=True)),receipt['confirmed_coherence_grounding_rows_sha256'])
+        self.assertEqual(digest((ROOT/'.agents/review/gold_review.csv').read_bytes()),receipt['gold_review_sha256'])
 
     def test_merge_preserves_review_text_mapping_and_shortfall_payload(self):
         receipt=json.loads((ROOT/'.agents/review/merge_receipt.json').read_text(encoding='utf-8'))

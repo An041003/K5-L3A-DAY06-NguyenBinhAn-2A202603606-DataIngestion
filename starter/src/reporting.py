@@ -1,235 +1,173 @@
-"""Produce a source-free submission from measured artifacts, with honest pending gates."""
+"""Final source-free report. Original experiment files are read-only inputs."""
 import csv
 import json
-import statistics
 from pathlib import Path
-from .io_utils import read_jsonl, write_json
 from .human_review import aggregate_human_review
+from .io_utils import read_jsonl, write_json
+
+
+def _json(path):
+    return json.loads(path.read_text(encoding='utf-8'))
 
 
 def generate(root: Path):
-    private = root/'.agents'
-    results = root/'results'
+    private, results = root/'.agents', root/'results'
     human = aggregate_human_review(root)
-    if human:
-        write_json(results/'human_review_summary.json',human)
-        with (results/'manual_evaluation_summary.csv').open('w',encoding='utf-8',newline='') as f:
-            fields=['strategy','coherence_n','coherence_sum','coherence_mean_out_of_2','grounding_n','grounding_sum','grounding_mean_out_of_2','grounding_0','grounding_1','grounding_2','label_origin','metadata_status']
-            writer=csv.DictWriter(f,fieldnames=fields)
-            writer.writeheader()
-            for s in ('A','B','C'):
-                c,g=human['coherence'][s],human['grounding'][s]
-                writer.writerow({'strategy':s,'coherence_n':c['n'],'coherence_sum':c['sum'],'coherence_mean_out_of_2':f"{c['mean']:.2f}",
-                    'grounding_n':g['n'],'grounding_sum':g['sum'],'grounding_mean_out_of_2':f"{g['mean']:.2f}",
-                    **{f'grounding_{i}':g['distribution'][str(i)] for i in (0,1,2)},
-                    'label_origin':'USER_CONFIRMED','metadata_status':'PENDING_HUMAN'})
-    coherence_labels={s:f"{human['coherence'][s]['mean']:.2f} (n={human['coherence'][s]['n']})" if human else 'PENDING_HUMAN' for s in ('A','B','C')}
-    grounding_labels={s:f"{human['grounding'][s]['mean']:.2f}; 0/1/2: "+'/'.join(str(human['grounding'][s]['distribution'][str(i)]) for i in (0,1,2)) if human else 'PENDING_HUMAN' for s in ('A','B','C')}
-    gold_note=('**20/20 gold evidence chính đã được người dùng xác nhận ngày '+human['confirmation_date']+'**, lưu trong review overlay `.agents/review/gold_review.csv`. Các trường question/evidence/source/page và split của benchmark đã khóa không đổi. Các cờ human_verified=false trong benchmark/trace, manifest ban đầu và trạng thái PROVISIONAL_PENDING_HUMAN_GOLD trong metrics là snapshot trước xác nhận, được giữ nguyên; trạng thái review mới ở `results/human_review_summary.json`. Alternative gold cho cả 20 câu vẫn PENDING_HUMAN.'
-        if human else 'AI soạn từ nguồn thật; human_verified=false, gold còn PENDING_HUMAN.')
-    review_note=('Người dùng đã xác nhận **30 coherence + 15 grounding**; điểm được tính từ từng nhãn, không suy ra từ text proxy. Nhãn score/evidence support là do người dùng duyệt; một số lý do trong CSV là AI đề xuất, **không coi là nhận xét do tác giả tự viết hoặc đã duyệt lý do**. Metadata 44 dòng và extraction/alternate gold vẫn PENDING_HUMAN.'
-        if human else 'Toàn bộ nhãn người chấm còn PENDING_HUMAN.')
-    approved_detail=('Coherence: cùng 10 vị trí nguồn trên 10 trang đầu, offset min(200, len−1), chọn chunk đầu tiên bao phủ vị trí. Grounding có đủ **5 câu test T01–T05 cho mỗi strategy**; T01=1, T02–T05=2 theo người dùng xác nhận, tổng 9/5=**1.80/2**, phân bố 0:0, 1:1, 2:4. Coherence A tổng 10/10=**1.00/2**, B/C tổng 15/10=**1.50/2**.'
-        if human else 'Coherence và grounding chưa có gói nhãn người dùng được xác minh: PENDING_HUMAN; không tự điền điểm.')
-    coherence_analysis=('Nhãn người dùng trên cùng 10 vị trí cho thấy A=1.00/2, B=C=1.50/2. Trong mẫu này B/C cao hơn A 0.50 điểm; chưa suy rộng ngoài 10 vị trí và không khẳng định xử lý trọn bảng qua nhiều trang.'
-        if human else 'Điểm coherence PENDING_HUMAN; độ dài/boundary chunk không thay nhãn người chấm.')
-    grounding_analysis=('Người dùng xác nhận A=B=C=1.80/2 trên đủ 5 test, T01=1 và bốn câu còn lại=2. Đây là đánh giá độ đủ của top-3 evidence, không phải độ đúng câu trả lời LLM. Có thể khác exact-quote proxy vì xét ngữ cảnh và cách diễn đạt tương đương; xác nhận grounding không đồng nghĩa duyệt thêm alternative gold để tính lại retrieval.'
-        if human else 'Grounding PENDING_HUMAN; exact quote proxy không thay nhãn người chấm.')
-    approved_count=sum(human[k][s]['n'] for k in ('coherence','grounding') for s in ('A','B','C')) if human else 0
-    primary_gold_status='Gold chính đã được xác nhận' if human else 'Gold chính PENDING_HUMAN'
-    approved_scope='Đã xác nhận 20 gold chính + 30 coherence + 15 grounding; không tiếp tục ghi các mục này là chờ duyệt.' if human else 'Gold/coherence/grounding còn PENDING_HUMAN.'
-    def read(path, default=None):
-        return json.loads(path.read_text(encoding='utf-8')) if path.exists() else default
-    manifest = read(root/'data/manifest.json')
-    chunks = read(results/'chunk_statistics.json')
-    ingest = read(results/'ingest_statistics.json')
-    frozen = read(private/'benchmark/lock.json')
-    trace_path = private/'results/traces.jsonl'
-    traces = read_jsonl(trace_path) if trace_path.exists() else []
-    complete = len(traces) == 60
-    returned_records = sum(len(t['hits']) for t in traces)
-    test_metadata_records = sum(len(t['hits']) for t in traces if t['split']=='test')
-    metrics = []
-    if complete:
-        with (results/'metrics.csv').open(encoding='utf-8') as f:
-            metrics = list(csv.DictReader(f))
-    usage_path = private/'cache/api_usage.jsonl'
-    usage = read_jsonl(usage_path) if usage_path.exists() else []
-    token_values = [(u.get('usage') or {}).get('prompt_tokens') for u in usage]
-    cost_values = [(u.get('usage') or {}).get('cost') for u in usage]
-    measured_tokens = sum(token_values) if token_values and all(v is not None for v in token_values) else None
-    measured_cost = sum(cost_values) if cost_values and all(v is not None for v in cost_values) else None
-    cost = {'successful_batches':len(usage),'inputs':sum(u['inputs'] for u in usage),
-        'measured_prompt_tokens':measured_tokens,'provider_reported_cost_usd':measured_cost,
-        'estimated_cost_usd':measured_tokens*0.20/1e6 if measured_tokens is not None else None,
-        'estimate_rate_usd_per_million':0.20,'pricing_checked_date':'2026-11-13',
-        'scope':'successful document/query pipeline requests; separate public smoke excluded (2 tokens); failed unknown charges not asserted'}
-    write_json(results/'api_usage_summary.json',cost)
-    timing = []
-    for s in ('A','B','C'):
-        times = [t['search_seconds'] for t in traces if t['strategy']==s]
-        timing.append({'strategy':s,'queries':len(times),'search_sum_seconds':sum(times) if times else None,
-            'search_median_seconds':statistics.median(times) if times else None,
-            'note':'local client wall time includes database connection; shared query embedding timed separately in private trace'})
-    write_json(results/'search_timing.json',timing)
-    questions = {q['id']:q for q in read_jsonl(private/'benchmark/questions.jsonl')}
-    failures = []
-    for t in traces:
-        if not t['evaluation']['evidence_hit_at_3']:
-            gold_page_seen = any(h['page']==t['gold_page'] and h['document_id']==t['gold_source_id'] for h in t['hits'])
-            failures.append({'question_id':t['id'],'split':t['split'],'strategy':t['strategy'],
-                'source_id':t['gold_source_id'],'original_gold_page':t['gold_page'],
-                'top3_original_pages':[h['page'] for h in t['hits']],
-                'gold_offsets':[questions[t['id']]['evidence_start'],questions[t['id']]['evidence_end']],
-                'returned_gold_page_offsets':[[h['metadata']['start'],h['metadata']['end']] for h in t['hits'] if h['page']==t['gold_page']],
-                'technical_failure':'COMPLETE_QUOTE_NOT_IN_SINGLE_RETURNED_CHUNK' if gold_page_seen else 'GOLD_PAGE_NOT_IN_TOP3',
-                'human_evidence_judgment':'PENDING_HUMAN'})
-    write_json(results/'failure_summary.json',failures)
-    metric_table = '\n'.join(f"| {m['strategy']} | {m['split']} | {m['hit_at_1_n']}/{m['n']} ({float(m['hit_at_1']):.1%}) | {m['evidence_hit_at_3_n']}/{m['n']} ({float(m['evidence_hit_at_3']):.1%}) |" for m in metrics)
-    if not metric_table:
-        metric_table = '\n'.join(f'| {s} | {split} | NOT_RUN | NOT_RUN |' for s in ('A','B','C') for split in ('dev','test'))
-    selection = read(private/'results/selection_before_test.json',{})
-    hypothesis = {'A':'Short overlapping windows provide localized retrieval but may split conditions.',
-        'B':'Larger source-bounded paragraph/line groups may preserve evidence at increased per-chunk length.',
-        'C':'Source-proven question scope may remove off-scope hits; wrong input scope can exclude valid evidence.'}
-    experiment_rows = []
-    for s in ('A','B','C'):
-        row = {'strategy':s,'chunking':'fixed' if s=='A' else 'paragraph/line, chapter bounded',
-            'chunk_size':500 if s=='A' else 1100,'overlap':50 if s=='A' else 0,
-            'metadata':'document_id,source,original_page,pdf_page,section,source_offsets,heading_provenance',
-            'filter':'question-supplied section in SQL' if s=='C' else 'none',
-            'vectorizer':'OpenRouter google/gemini-embedding-2 / 768 / pgvector cosine exact',
-            'hypothesis':hypothesis[s]}
-        for split in ('dev','test'):
-            m = next((m for m in metrics if m['strategy']==s and m['split']==split),None)
-            row[f'{split}_hit1'] = f"{m['hit_at_1_n']}/{m['n']}" if m else 'NOT_RUN'
-            row[f'{split}_hit3'] = f"{m['evidence_hit_at_3_n']}/{m['n']}" if m else 'NOT_RUN'
-        row['notes'] = 'PROVISIONAL exact-quote proxy; human gold/manual review PENDING; C shares B vectors; no test retuning'
-        experiment_rows.append(row)
-    with (root/'artifacts/experiment_log.csv').open('w',encoding='utf-8',newline='') as f:
-        w = csv.DictWriter(f,fieldnames=list(experiment_rows[0]))
-        w.writeheader()
-        w.writerows(experiment_rows)
-    cases=[]
-    seen=set()
-    # Show both a fragmented-evidence case and a missing-gold-page case where available.
-    chosen = []
-    for kind in ('COMPLETE_QUOTE_NOT_IN_SINGLE_RETURNED_CHUNK','GOLD_PAGE_NOT_IN_TOP3'):
-        candidate = next((f for f in failures if f['technical_failure']==kind),None)
-        if candidate:
-            chosen.append(candidate)
-    for failure in chosen:
-        if failure['question_id'] in seen:
-            continue
-        seen.add(failure['question_id'])
-        cases.append(f"- `{failure['question_id']}`, strategy {failure['strategy']}, nguồn `{failure['source_id']}`, trang gốc {failure['original_gold_page']}: top-3 tại {failure['top3_original_pages']}; `{failure['technical_failure']}`. Đây là lỗi theo proxy kỹ thuật; phải đọc trace riêng trước khi chốt thiếu evidence về nghĩa.")
-        if failure['returned_gold_page_offsets']:
-            cases.append(f"  Gold chiếm offsets {failure['gold_offsets']}; chunk trả về ở trang gold chiếm {failure['returned_gold_page_offsets']}. Ranh giới cửa sổ làm mất một phần quote nên không được tính hit theo định nghĩa một chunk đủ evidence; không cộng nhiều chunk để thay metric chính.")
-        else:
-            cases.append('  Không trả về trang gold đã khai báo trong top-3; có thể do nội dung tương tự ở nhiều trang. Phải đối chiếu evidence tương đương trước khi kết luận là lỗi về nghĩa; không thêm alternate gold sau test để nâng số đo hiện tại.')
-    if not cases:
-        cases=['- Chưa có failure retrieval đo được để phân tích: NOT_RUN. Không tạo ví dụ giả.']
-    warning_pages = sum(bool(p['warnings']) for p in manifest['pages'])
-    audit_count = 30+test_metadata_records+15 if complete else 'PENDING_RETRIEVAL'
-    if complete:
-        write_json(results/'trace_integrity_summary.json',{'trace_records':len(traces),'returned_chunk_records':returned_records,
-            'expected_max_chunk_records':180,'test_metadata_records':test_metadata_records,
-            'manual_ratable_rows':audit_count,'audit_shortfall_rows':180-returned_records,
-            'shortfalls':[{'question_id':t['id'],'strategy':t['strategy'],'returned':len(t['hits']),
-                'reason':'only two B chunks in requested section; C returns available eligible rows'} for t in traces if len(t['hits'])<3],
-            'human_gold_status':'PENDING_HUMAN'})
-    report = f'''# Báo cáo cá nhân — Lab Day 06
+    if not human or human['status']!='FINAL_REVIEW_ACCEPTED_WITH_LIMITATIONS':
+        raise RuntimeError('BLOCKED: explicit final review decisions required')
+    manifest = _json(root/'data/manifest.json')
+    chunks = _json(results/'chunk_statistics.json')
+    ingest = _json(results/'ingest_statistics.json')
+    warm = _json(results/'ingest_latest.json')
+    usage = _json(results/'api_usage_summary.json')
+    timing = {r['strategy']:r for r in _json(results/'search_timing.json')}
+    frozen = _json(private/'benchmark/lock.json')
+    selection = _json(private/'results/selection_before_test.json')
+    traces = read_jsonl(private/'results/traces.jsonl')
+    with (results/'metrics.csv').open(encoding='utf-8',newline='') as f:
+        metrics = list(csv.DictReader(f))
+    if len(traces)!=60 or sum(len(t['hits']) for t in traces)!=179 or selection['selected']!='C':
+        raise ValueError('Frozen experiment incomplete or selection changed')
+    write_json(results/'human_review_summary.json',human)
+    fields=['strategy','coherence_n','coherence_sum','coherence_mean_out_of_2','grounding_n','grounding_sum','grounding_mean_out_of_2','grounding_0','grounding_1','grounding_2','label_origin','metadata_accepted_n','metadata_total','metadata_status','metadata_independently_human_scored']
+    with (results/'manual_evaluation_summary.csv').open('w',encoding='utf-8',newline='') as f:
+        writer=csv.DictWriter(f,fieldnames=fields);writer.writeheader()
+        for s in ('A','B','C'):
+            c,g,m=human['coherence'][s],human['grounding'][s],human['metadata']['by_strategy'][s]
+            writer.writerow({'strategy':s,'coherence_n':c['n'],'coherence_sum':c['sum'],'coherence_mean_out_of_2':f"{c['mean']:.2f}",'grounding_n':g['n'],'grounding_sum':g['sum'],'grounding_mean_out_of_2':f"{g['mean']:.2f}",**{f'grounding_{i}':g['distribution'][str(i)] for i in (0,1,2)},'label_origin':'USER_CONFIRMED','metadata_accepted_n':m['accepted'],'metadata_total':m['total'],'metadata_status':human['metadata']['status'],'metadata_independently_human_scored':False})
+    metric_table='\n'.join(f"| {m['strategy']} | {m['split']} | {m['hit_at_1_n']}/{m['n']} ({float(m['hit_at_1']):.1%}) | {m['evidence_hit_at_3_n']}/{m['n']} ({float(m['evidence_hit_at_3']):.1%}) | {chunks[m['strategy']]['chunks']} |" for m in metrics)
+    quality_table='\n'.join(f"| {s} | {human['coherence'][s]['mean']:.2f} (10) | {human['metadata']['by_strategy'][s]['accepted']}/{human['metadata']['by_strategy'][s]['total']} | {'N/A; quan sát scope 2/2' if s=='A' else 'N/A; quan sát scope 1/2' if s=='B' else '2/2 hit trong scope; 1/2 đủ 3 hit'} | 0 / 1 / 4; {human['grounding'][s]['mean']:.2f} (5) |" for s in ('A','B','C'))
+    time_table='\n'.join(f"| {s} | {ingest[s]['ingest_seconds']:.3f} | {ingest[s]['second_write_seconds']:.3f} | {warm[s]['ingest_seconds']:.3f} | {timing[s]['search_median_seconds']*1000:.2f} |" for s in ('A','B'))
+    time_table+=f"\n| C | dùng B | dùng B | dùng B | {timing['C']['search_median_seconds']*1000:.2f} |"
+    resources=_json(results/'resource_snapshot.json') if (results/'resource_snapshot.json').exists() else {}
+    resource_note=(f"Đo read-only cuối: {resources['database_rows']} dòng; bảng và index PostgreSQL chiếm {resources['pg_total_relation_bytes']:,} byte, gồm text/metadata/vector/index." if resources.get('status')=='MEASURED' else 'Dung lượng vật lý DB chưa đo ở final review; không báo số giả.')
+    report=f'''# Báo cáo cá nhân — Day 06: Data Ingestion Engineering
 
-Học viên: **Nguyễn Bình An — 2A202603606 — L3A** (họ tên đã được người dùng xác nhận).
+**Nguyễn Bình An — 2A202603606 — L3A**
 
-Trạng thái: **PARTIAL — PENDING_HUMAN**. {'A/B/C đã chạy đủ; benchmark/retrieval metrics/trace và cấu hình được giữ nguyên.' if complete else 'Retrieval benchmark NOT_RUN.'} {review_note} Chưa đủ điều kiện tuyên bố hoàn tất rubric hoặc nộp chính thức. Không push.
+Repo: https://github.com/An041003/K5-L3A-DAY06-NguyenBinhAn-2A202603606-DataIngestion
 
-## Dữ liệu và pipeline
+**READY cho hồ sơ local, với giới hạn được công bố; chưa push/nộp GitHub.** Đã xác nhận 20 gold, 30 coherence, 15 grounding. Metadata là `USER_ACCEPTED_TECHNICAL_VERIFICATION`; extraction được chấp nhận với giới hạn. Không tự tuyên bố đạt 100/100 rubric: metadata được đối chiếu kỹ thuật rồi người dùng chấp nhận, khác phương pháp tự chấm độc lập từng chunk trong GUIDE; mức đáp ứng do người chấm quyết định.
 
-Corpus là trích đoạn tài liệu thiết kế KPI nội bộ, một nguồn `kpi-v2`. Có **42 trang vật lý, 42 trang nội dung**, gồm trang gốc **7–17 và 81–111**; **{manifest['characters']:,} ký tự** sau chuẩn hóa. Kiểm tra riêng từng trang: không có bìa, mục lục, trang trống hoặc trang chỉ có tài liệu tham khảo; trang 111 là ma trận truy vết nguồn–thiết kế có nội dung nghiệp vụ. Không áp ngưỡng 1.500 ký tự của text không phân trang lên PDF.
+## 1. Dữ liệu và pipeline
 
-SHA-256 PDF: `{manifest['sha256']}`. Manifest chứa ánh xạ và số ký tự từng trang tại `data/manifest.json`. Quyền: người dùng xác nhận xử lý local, gửi chunk và 20 question text tới OpenRouter/Google ngày 13/11/2026; xác nhận được ghi trong hồ sơ local. **Người chấm được xem dữ liệu gốc** để kiểm chứng bài, theo xác nhận mới của người dùng. Quyền xem riêng không bao gồm công bố: **chưa có quyền tái phân phối** PDF, text, gold hoặc trace đầy đủ lên GitHub. Các trạng thái access trong manifest thí nghiệm ban đầu là lịch sử; số liệu tổng hợp không thay cho full trace.
+### 1.1. Corpus và quyền sử dụng
 
-RAW PDF → trích xuất từng trang → bỏ running header và nhãn trang lặp → Unicode NFC/whitespace, giữ line breaks → gán chapter và offsets → chunk A/B → embeddings API → PostgreSQL/pgvector → top-3 → proxy/nhãn review. `original_page` là page/gold_page chính thức; `pdf_page` là vị trí mở PDF rút gọn. Có khoảng trống trang 18–80 nên không lan metadata qua khoảng trống.
+Một nguồn `kpi-v2`, tài liệu thiết kế KPI nội bộ: **42 trang PDF vật lý, 42 trang nội dung**, trang gốc **7–17 và 81–111**; **{manifest['characters']:,} ký tự** sau clean. Kiểm tra từng trang theo GUIDE, loại bìa/mục lục/trang trống/tài liệu tham khảo đơn thuần; trang 111 là ma trận truy vết có nội dung. Không áp ngưỡng 1.500 ký tự của text không phân trang lên PDF.
 
-Parser chính pypdf 6.21.4; PyMuPDF 1.27.2.3 được dùng cho trang gốc **12, 13, 93** vì pypdf trả control characters trong công thức/cấu hình. Không tự viết lại công thức. Có **28 trang cảnh báo reading order bảng**, tổng **{warning_pages} trang có ít nhất một cảnh báo**. Nội dung cảnh báo và body giữ local ở `.agents/processed/pages.jsonl`; manifest chỉ công bố loại cảnh báo/trang. Kiểm tra con người về thứ tự bảng: PENDING_HUMAN.
+SHA-256 PDF: `{manifest['sha256']}`. Manifest giữ page map, ký tự, warnings và ngày truy cập của snapshot. Người dùng xác nhận quyền xử lý local, gửi chunk/question tới OpenRouter/Google và **người chấm được xem dữ liệu gốc**. Quyền xem riêng không bao gồm công bố PDF, processed text, gold hoặc trace hạn chế lên GitHub. `data/ACCESS.md` mô tả kiểm chứng riêng; public repo chỉ có code, manifest không body, số liệu tổng hợp và báo cáo. Không tự cấp quyền chia sẻ hoặc push.
 
-ID chunk là SHA-256 của document/page/cấu hình/offset/text/metadata nguồn. Upsert trong transaction với khóa bảng, xóa ID cũ không còn trong snapshot của từng tài liệu rồi ghi mới; lỗi count, vector chiều sai, nonfinite, filter ngoài allowlist chặn xử lý. Không có local embedding hoặc vector giả. Cache nằm local, khóa theo hash text + model + dimensions + encoding contract; C dùng chính dòng B. Ghi usage từng request thành công; timeout không tự gửi lại vì chưa biết đã bị tính phí hay chưa; 429/503 retry tối đa 3 lần, backoff hữu hạn.
+### 1.2. Raw / Clean / Serve, parsing và normalization
 
-## Model, backend và chi phí
+**Raw:** PDF rút gọn và page_map giữ local; không upload PDF. Khoảng trang 18–80 không có trong excerpt, không tự điền nội dung thiếu.
 
-- OpenRouter `POST /api/v1/embeddings`; `google/gemini-embedding-2`, **768 dimensions**, document và query cùng raw text, không task prefix khác nhau. Không dùng chat completions. Vector trả về được kiểm tra count/index/finite/chiều/nonzero. Giới hạn mỗi input là 8.192 byte UTF-8 bảo thủ; không giả định đã chạy tokenizer của model.
-- PostgreSQL **{ingest['backend']['postgresql']}**, pgvector **{ingest['backend']['pgvector']}**, cosine `<=>`, **exact search**, không ANN. Docker image `pgvector/pgvector:0.8.7-pg16`, named volume `day6_nguyenbinhan_pg_data`; cổng local 55433. Bộ A/B lưu 306 dòng trong bảng `day06_chunks`; C ánh xạ B, không có index duplicate.
-- Smoke test từ script có sẵn: thành công, **768 dimensions, 2 prompt tokens**, chỉ câu công khai. Phép thử này không phải benchmark.
-- Pipeline usage đo được: **{cost['measured_prompt_tokens']} prompt tokens**, **{cost['inputs']} input**, **{cost['successful_batches']} request batch thành công**. Provider trả `usage.cost` tổng **{cost['provider_reported_cost_usd']} USD**. Giá tham chiếu kiểm tra 13/11/2026: 0,20 USD/triệu text tokens; ước tính từ usage là **{cost['estimated_cost_usd']} USD**. Khoản này loại smoke test riêng 2 tokens; không thay cho đối soát hóa đơn tài khoản. Không ghi 0 cho chi phí chưa đo.
-- API và thông số đối chiếu với [OpenRouter Embeddings](https://openrouter.ai/docs/api/api-reference/embeddings/submit-an-embedding-request), [model/pricing](https://openrouter.ai/google/gemini-embedding-2), [pgvector](https://github.com/pgvector/pgvector). Phiên bản package và thời điểm chạy ở `results/run_environment.json` nếu retrieval đã chạy.
+**Clean:** pypdf 6.21.4 đọc từng trang; bỏ running title/nhãn trang lặp, Unicode NFC và whitespace normalization, giữ line breaks/page boundaries. Khi pypdf trả control characters tại trang gốc **12,13,93**, dùng PyMuPDF 1.27.2.3, ghi rõ fallback; không tự viết lại công thức.
 
-## Metadata và ba cấu hình
+**Serve:** chunk A/B theo page/chapter → HTTP embeddings thực → upsert PostgreSQL/pgvector → cosine exact top-k=3. C áp section filter trong SQL khi question cung cấp scope. Trace lưu text/score/metadata/proxy từng câu, chỉ local.
 
-Mỗi chunk có document_id/source/page, pdf_page/original_page, start/end, `section` kiểu string, heading provenance. `section` là chapter heading **thực trong nguồn**, truyền xuống các trang liên tiếp và cắt chunk tại chapter boundary; không suy đoán theo tên file hoặc gold. Corpus có **17 giá trị chapter**; không dùng year/version gần như hằng số để tạo lợi ích filter giả. Một số chapter chỉ xuất hiện một phần trong trích đoạn; metadata không cam kết chứa trọn chương.
+Người dùng **chấp nhận extraction với giới hạn**. Giữ nguyên **29 trang có warnings**, gồm **28 trang reading order bảng**, fallback **12,13,93**. Các loại warning giao nhau, không cộng 28+3 thành số trang khác nhau. Không chuyển 29 trang thành human_verified=true và không mô tả extraction hoàn toàn không lỗi. Bảng nối trang có thể thiếu ngữ cảnh; sơ đồ raster không hiện đầy đủ trong plain text. AI xem trực quan bốn trang 12/13/93/94 không thay kiểm tra toàn diện của người dùng.
 
-| Cấu hình | Tham số | Số chunk | Min / median / max ký tự | Tổng ký tự |
+### 1.3. Identity, metadata, lineage và quality gate
+
+Page/chunk có document_id, source, page=original_page, pdf_page, offsets start/end, section và heading provenance. `pdf_page` mở bản 42 trang; `original_page` dùng gold/citation; ví dụ PDF page12 tương ứng trang gốc81. Section là chapter heading thật, truyền qua trang gốc liên tiếp, reset khi gap và cắt chunk tại chapter boundary. Có **17 chapter values**; không dùng year/version gần hằng số làm filter giả.
+
+ID là SHA-256 của document/page/cấu hình/offset/text/metadata. Upsert transactional xóa stale IDs trong snapshot từng tài liệu rồi ghi lại; cùng input không tăng dòng. Đã kiểm tra re-ingestion, stale-ID removal/restore bằng technical fixture từ chunk thật và persistence sau restart Docker. Critical gate chặn thiếu nguồn/trang, sai vector/count/dimensions/finite values/model, thiếu key hoặc backend lỗi. Warning gate giữ cảnh báo parser/bảng, không tự điền text hoặc clear warning. Lineage: trace → chunk offsets → original_page/pdf_page → PDF đúng SHA.
+
+### 1.4. Embedding và vector store
+
+OpenRouter **google/gemini-embedding-2**, **768 dimensions**, POST `/api/v1/embeddings`. Query/document cùng encoding raw text, model và vector space; không chat completions, local embeddings hoặc mock. Kiểm tra index/count/order, finite/dimensions/nonzero. Batch tối đa 16 input, trần 8.192 byte UTF-8/input bảo thủ; không tự nhận đã chạy tokenizer model. Cache theo text hash/model/dimensions, retry 429/503 backoff hữu hạn; timeout không tự gửi lại khi chưa biết đã tính phí chưa. Không fallback provider.
+
+Python 3.12.10; PostgreSQL **{ingest['backend']['postgresql']}**, pgvector **{ingest['backend']['pgvector']}**, cosine `<=>`, **exact search**, không ANN. Docker image pgvector/pgvector:0.8.7-pg16, cổng 127.0.0.1:55433, named volume day6_nguyenbinhan_pg_data. A 202 + B 104 = 306 rows; C ánh xạ B, không lưu thêm 104 vector. B tái sử dụng 8 text trùng A; C không gọi document embedding riêng. Key chỉ trong local .env/environment.
+
+## 2. Cấu hình và benchmark
+
+### 2.1. A/B/C và biến thay đổi
+
+| Strategy | Chính sách | Chunk | Min / median / max ký tự | Tổng ký tự |
 |---|---|---:|---|---:|
-| A | fixed 500 ký tự, overlap 50, giới hạn page/chapter | {chunks['A']['chunks']} | {chunks['A']['min']} / {chunks['A']['median']} / {chunks['A']['max']} | {chunks['A']['characters']} |
-| B | paragraph/line packing tối đa 1.100 ký tự, word fallback, không overlap | {chunks['B']['chunks']} | {chunks['B']['min']} / {chunks['B']['median']} / {chunks['B']['max']} | {chunks['B']['characters']} |
-| C | cùng chunk/vector với B; chỉ filter section theo input câu hỏi tại SQL | {chunks['C']['chunks']} (dùng B) | giống B | giống B |
+| A | fixed 500, overlap 50, giới hạn page/chapter |202|50 /500 /500|88279|
+| B | paragraph/line packing, max 1100, word fallback, không overlap |104|50 /1010.5 /1098|80880|
+| C | chính xác chunk/vector/DB rows B; section filter theo question |104 dùng B|giống B|giống B|
 
-A–B thay chính sách chunking (kích thước, overlap và boundary packing được nêu rõ); B–C chỉ đổi filter ở retrieval. Mọi cấu hình dùng cùng corpus, câu hỏi, model, dimensions, store, cosine và top-3. Bỏ whitespace ở mép chunk nên tổng ký tự B thấp hơn text trang; test bảo toàn mọi ký tự không phải whitespace đã kiểm tra.
+A–B thay chính sách chunking gồm size/overlap/packing, không quy kết riêng một yếu tố. B–C chỉ đổi filter. Giữ corpus, model, dimensions, store, cosine, question/gold, top-k. Không có scope thì C/B giống nhau cả IDs/score, đã test. Chỉ bỏ whitespace ở mép chunk; mọi ký tự không phải whitespace được kiểm tra bảo toàn.
 
-## Benchmark và cách đánh giá
+### 2.2. Gold evidence và dev/test
 
-**20 câu, 15 dev/5 test**, gồm hỏi trực tiếp, paraphrase, điều kiện/ngoại lệ; **5 câu filter, 2 câu filter test**. AI soạn từ các trang thật trước retrieval, kiểm tra exact span của evidence và filter khớp chapter nguồn. {gold_note} Không thêm gold alternative hoặc tính lại retrieval metric khi chưa được duyệt.
+**20 câu: 15 dev/5 test**, **5 filter queries, 2 thuộc test**. Có hỏi trực tiếp, paraphrase, điều kiện/ngoại lệ và phạm vi. Evidence là span nguồn thật; **20/20 gold chính đã được người dùng xác nhận**. Không đổi question/answer/split/source/evidence sau lock. Filter là scope có trong question/ngữ cảnh từ trước retrieval, không lấy gold source/page/answer làm query hoặc filter. A/B thấy cùng question, C mới lọc SQL.
 
-Split theo chủ đề: dev phần quy tắc/quyền/yêu cầu/kiến trúc; test API conventions và vận hành/nghiệm thu. Một tài liệu dùng chung từ vựng, điều kiện có thể lặp; đây không phải holdout độc lập theo tài liệu. Không retune theo kết quả test. Question filter nói rõ chapter scope từ trước retrieval; A/B vẫn thấy cùng question text, C mới áp lọc SQL. Vì câu hỏi đã chứa ngữ cảnh chapter nên mức lợi ích filter có thể nhỏ.
+Dev lấy chủ đề quy tắc/quyền/yêu cầu/kiến trúc, test lấy API conventions/vận hành/nghiệm thu. Vẫn có shared vocabulary và nội dung lặp, nên không gọi holdout độc lập theo tài liệu. Benchmark được soạn trước search; nhãn người dùng xác nhận sau đó không được dùng retune.
 
-Hash bộ benchmark trước retrieval: `{frozen['benchmark_sha256']}`; thời điểm lock `{frozen['at']}`. Tiêu chí chọn đã khóa: **dev Evidence Hit@3 → dev Hit@1 → ít chunk lưu hơn → thứ tự strategy**. Lựa chọn được ghi trước test retrieval tại `.agents/results/selection_before_test.json`; lựa chọn tạm thời: **{selection.get('selected','NOT_RUN')}**. Nhãn người dùng xác nhận sau thí nghiệm dùng để báo cáo, không dùng chọn lại cấu hình theo test.
+Hash benchmark `{frozen['benchmark_sha256']}`, lock UTC `{frozen['at']}`. Tiêu chí khóa: **dev Hit@3 → dev Hit@1 → ít chunk → thứ tự strategy**. Đã chọn **C trước test retrieval**; giữ nguyên tới cuối, không chọn lại bằng test.
 
-Proxy kỹ thuật: cùng source_id/trang gốc và **toàn bộ evidence_quote** sau normalize whitespace nằm trong một chunk. Hit@1 = số top-1 hit/N; Evidence Hit@3 = số câu có ≥1 hit trong top-3/N. Các giá trị dưới đây giữ nguyên phép đo exact-quote ban đầu trên gold chính; alternative evidence chưa xác nhận nên chưa đánh giá đầy đủ các nguồn tương đương. Không suy retrieval hit từ điểm grounding người dùng và không tính lại các chỉ số sau merge xác nhận.
+## 3. Kết quả
 
-## Kết quả đo thật
+### 3.1. Retrieval Accuracy
 
-| Strategy | Split | Hit@1, n/N (%) | Evidence Hit@3, n/N (%) |
-|---|---|---|---|
+Hit kỹ thuật cần đúng source/page và **toàn bộ evidence_quote** sau normalize whitespace trong một chunk. Hit@1=số top-1 hit / N; Evidence Hit@3=số câu có ít nhất 1 hit trong tối đa 3 chunk / N. Không ghép partial quotes để thay metric chính. Grounding score không tự xác nhận alternative gold.
+
+| Strategy | Split | Hit@1 n/N (%) | Evidence Hit@3 n/N (%) | Chunk count |
+|---|---|---|---|---:|
 {metric_table}
 
-Ingest đầu tiên: A **{ingest['A']['ingest_seconds']:.3f}s**, B **{ingest['B']['ingest_seconds']:.3f}s** (gồm API/cache lookup và write đầu, không gồm setup/parser). B có 8 text trùng A đã được tái sử dụng; C không có lần gọi document embedding riêng. Write lại cùng vectors: A **{ingest['A']['second_write_seconds']:.3f}s**, B **{ingest['B']['second_write_seconds']:.3f}s**, count/IDs không đổi. Đây là một lần đo wall time, không phải benchmark hiệu năng nhiều lượt. Số đo search ở `results/search_timing.json`, gồm mở connection local; query embedding chia sẻ cùng một vector cho A/B/C.
+**metrics.csv và trace giữ nguyên byte.** Cờ PROVISIONAL_PENDING_HUMAN_GOLD/human_verified=false ở snapshot ban đầu giữ cho lịch sử; quyết định hiện hành ở human_review_summary.json. Gold chính nay confirmed, nhưng proxy bảo thủ với diễn đạt/nguồn tương đương chưa duyệt. Không hồi tố nâng điểm.
 
-Đã kiểm tra xóa stale chunk ID bằng một technical fixture từ chính chunk thật, sau đó khôi phục đầy đủ corpus trước retrieval. Chi tiết source-free ở `results/storage_verification.json`. Kiểm tra restart/persistence ở `results/persistence_verification.json` nếu có. Các phép thử kỹ thuật không được tính vào benchmark corpus hoặc usage token giả.
+### 3.2. Coherence, Metadata Usefulness và Grounding Quality
 
-| Strategy | Coherence /2 (10 vị trí) | Metadata đủ/đúng (số bản ghi thực) | Filter compliance | Grounding /2 (5 câu) |
+| Strategy | Coherence mean/2 (n) | Metadata kỹ thuật được chấp nhận | Filter compliance | Grounding 0/1/2; mean/2 (n) |
 |---|---|---|---|---|
-| A | {coherence_labels['A']} | PENDING_HUMAN (15) | N/A (không áp lọc); quan sát scope 2/2 | {grounding_labels['A']} |
-| B | {coherence_labels['B']} | PENDING_HUMAN (15) | N/A (không áp lọc); quan sát scope 1/2 | {grounding_labels['B']} |
-| C | {coherence_labels['C']} | PENDING_HUMAN (14) | 2/2 scope trên hit thực; 1/2 đủ ba hit | {grounding_labels['C']} |
+{quality_table}
 
-{approved_detail} {review_note}
+**Coherence:** đủ 30 nhãn, cùng 10 vị trí đã khóa trước search; offset min(200,len−1) trên 10 trang đầu, lấy chunk có start nhỏ nhất bao phủ vị trí. Score 0/1/2 theo GUIDE. A tổng 10/10=1.00; B/C tổng 15/10=1.50. Giữ nguyên từng điểm và nhận xét gói approvals. Score user-confirmed; lý do AI đề xuất có provenance riêng, không gán tác giả tự viết/xác nhận lý do.
 
-Metadata: mục tiêu tối đa 45 bản ghi test, thực nhận **{test_metadata_records}**. Có **{audit_count} mẫu có thể chấm**, cộng 1 dòng thiếu kết quả NOT_APPLICABLE. Trong đó đã duyệt **{approved_count} nhãn coherence/grounding**; 44 nhãn metadata còn chờ. C/T05 chỉ có 2 chunk B trong scope; không thêm hit giả. Filter scope trên hit thực nhận 2/2 query C; full-top-3 scope 1/2. Đối chiếu tự động source/trace: **{human['metadata']['technical_source_trace_matches'] if human else 'NOT_RUN'}/44**, dòng PostgreSQL: **{human['metadata']['technical_database_matches'] if human else 'NOT_RUN'}/44**, nhưng **chưa công bố tỷ lệ metadata đúng/đủ do người chấm**. Review riêng: `.agents/review/metadata_review_44.csv`. Rủi ro thiên lệch do tự chấm và mẫu nhỏ vẫn có.
+**Metadata:** người dùng chấp nhận **44/44**, **A=15/15, B=15/15, C=14/14**, đúng trạng thái **USER_ACCEPTED_TECHNICAL_VERIFICATION**. document_id/source/page/pdf_page/original_page/section và chunk text đã đối chiếu kỹ thuật với corpus, offsets, page map, heading provenance và SQL rows. **Không tuyên bố người dùng tự chấm độc lập từng chunk**; human_verified vẫn False. Khác biệt phương pháp với kiểm tra thủ công trong GUIDE được công bố để người chấm quyết định rubric. Lợi ích: truy đúng trang và loại hit ngoài scope. Hạn chế: chapter rộng, bảng nối trang, scope sai có thể loại evidence đúng; agreement DB/artifact không bảo đảm mọi quan hệ bảng đúng về nghĩa.
 
-Trace đầy đủ (text, score, metadata, filters, gold, proxy từng câu) giữ local `.agents/results/traces.jsonl` (**{len(traces)} dòng, {returned_records} chunk records**; tối đa 180). Public repo chỉ có metrics tổng hợp, thống kê, hash và failure ID/trang; người chấm cần quyền riêng để xem nguồn/evidence. Không publish nội dung KPI để làm đủ checklist.
+C có 2/2 filter test trong scope trên hit thực; chỉ 1/2 query đủ 3 hit. **C/T05 chỉ có 2 chunk B hợp lệ**, rank 3 NOT_RETURNED/NOT_APPLICABLE; chỉ 44 metadata, không duplicate hoặc tạo hit giả. A/B không filter nên compliance áp dụng là N/A; tỷ lệ quan sát trùng scope tương ứng 2/2 và 1/2 không phải bảo đảm lọc.
 
-## Năm khía cạnh và phân tích
+**Grounding:** đủ 15 nhãn, 5 test mỗi strategy. **T01:A=B=C=1; T02–T05:A=B=C=2**. Mỗi strategy 9/5=**1.80/2**, phân bố 0:0, 1:1, 2:4. Chấm độ đủ top-3 evidence, không phải độ đúng đáp án LLM. T05 có 2 hit vẫn 2/2 theo user-confirmed evidence sufficiency. Manual grounding khác exact-quote proxy không cho phép thêm alternative gold hoặc tính lại test.
 
-1. **Retrieval accuracy:** bảng trên giữ nguyên dev/test và số tử/mẫu. Test 5 câu: mỗi câu làm thay đổi 20 điểm phần trăm. {primary_gold_status}; việc tìm/duyệt evidence tương đương còn chờ, không tự sửa Hit@1/Hit@3.
-2. **Chunk coherence:** {coherence_analysis}
-3. **Metadata usefulness:** original_page/pdf_page giúp mở đúng trang nguồn; section giúp giới hạn phạm vi trong SQL. Hạn chế: chapter khá rộng, trích đoạn không liên tục và headings có thể bắt đầu giữa trang; scope sai sẽ loại evidence đúng. Mechanical compliance không chứng minh metadata đúng hay hữu ích về nghĩa.
-4. **Grounding quality:** {grounding_analysis}
-5. **Data strategy impact:** A có 202 chunk, B có 104, giảm **{(1-104/202):.1%}** số dòng/vector; A thêm overlap nên tăng tổng ký tự được gửi. B lớn hơn dễ chứa cả điều kiện nhưng mỗi vector bao phủ nhiều ý. Dev Hit@3 B/C cùng 12/15, hơn A 11/15; C được chọn tạm thời vì dev Hit@1 8/15 so với B 7/15. Test B/C cùng Hit@3 3/5, A 2/5; không có bằng chứng từ mẫu test này cho thấy C tăng Hit@3 so với B. C loại hit ngoài scope ở T05 nhưng chỉ còn hai kết quả. Đọc kết quả cùng manual audit trước quyết định cuối, không thay tham số sau test.
+### 3.3. Thời gian, tài nguyên và chi phí API
 
-Các case lỗi kỹ thuật đã chạy (nội dung nguồn giữ riêng):
+| Strategy | Ingest đầu s | Write lại s | Ingest cache s | Median SQL search ms/query |
+|---|---:|---:|---:|---:|
+{time_table}
 
-{chr(10).join(cases)}
+Ingest đầu gồm API/cache lookup+write đầu, không gồm setup/parser; search median từ 20 query gồm mở connection local, không gồm query embedding dùng chung A/B/C. C dùng ingest B, không có ingest riêng. Đây là một lượt wall time, không thử tải nhiều lượt hoặc kiểm định ý nghĩa thống kê latency.
 
-Phân tích sâu và xác nhận alternative gold vẫn PENDING_HUMAN. Đã quét 20 quote trên 42 trang: không có quote giống hệt ở trang khác; 78 chunk ứng viên từ retrieval cũ được gom riêng cho 20 câu để người dùng xem, **chưa phải 78 gold hợp lệ**. Đã kiểm tra tự động 29 trang có cảnh báo; AI xem trực quan trang gốc 12,13,93,94, ghi nhận rủi ro bảng nối trang và sơ đồ raster không nằm đầy đủ trong plain text. Các nhận xét AI không xóa warning hoặc thay xác nhận người dùng. Không đổi processed text/chunk/embeddings/benchmark/trace; không retune hoặc chấm lại retrieval.
+202+104 vector, không thêm C; raw float32 payload lý thuyết 306×768×4=**940.032 byte**, chưa overhead. {resource_note} CPU/RAM/GPU peak chưa đo; không báo số giả. Không chạy local model hoặc tác vụ GPU embedding trên máy client. Cache làm lượt sau nhanh hơn; không coi cold/warm là cùng điều kiện.
 
-## Tái lập, giới hạn và việc còn chờ
+Pipeline usage **{usage['measured_prompt_tokens']:,} prompt tokens**, **{usage['inputs']} input**, **{usage['successful_batches']} batch thành công**; provider trả usage.cost tổng **{usage['provider_reported_cost_usd']:.7f} USD**. Giá tham chiếu 0,20 USD/triệu text tokens, kiểm tra 13/11/2026, cho estimate {usage['estimated_cost_usd']:.7f} USD; không thay đối soát hóa đơn. Smoke script gửi câu công khai, trả 768 chiều/2 tokens; tổng pipeline loại 2 tokens này. Final review không gọi embedding hoặc benchmark lại. Không ghi 0 cho chi phí chưa đo.
 
-Các lệnh và điều kiện dữ liệu ở README; tests chạy trên corpus thật/cache thật, không download embedding local. Source và benchmark không thể tái lập từ public checkout đơn lẻ khi chưa được cấp quyền; báo cáo công khai ghi rõ giới hạn này. Không giả định artifact tổng hợp đủ cho chấm full rubric.
+Nguồn kỹ thuật: [OpenRouter embeddings](https://openrouter.ai/docs/api/api-reference/embeddings/submit-an-embedding-request), [model/pricing](https://openrouter.ai/google/gemini-embedding-2), [pgvector cosine](https://github.com/pgvector/pgvector). Giá/versions là snapshot thí nghiệm, không cam kết giá tương lai.
 
-PENDING: **44 metadata**, alternative gold cho 20 câu, xác nhận extraction/reading order và quyền công bố/push. Họ tên Nguyễn Bình An và quyền người chấm xem dữ liệu gốc đã được xác nhận. C/T05 rank3 là N/A vì chỉ có2chunk trong scope, không phải mẫu còn thiếu cần chấm. {approved_scope} Số tổng hợp mới ở `results/human_review_summary.json` và `results/manual_evaluation_summary.csv`; file chấm chi tiết và gói xác nhận giữ local, không commit.
+## 4. Phân tích và kết luận
 
-Công cụ hỗ trợ: Codex soạn code/câu hỏi/phân tích; OpenRouter chỉ tạo embedding. Người dùng phải hiểu code và tự xác minh evidence/nhãn. Không tạo dữ liệu, vector, kết quả, nguồn hoặc nhãn thủ công giả.
+### 4.1. Data Strategy Impact và failures
+
+A–B giảm 202→104 chunk (**48,5%**), ký tự 88279→80880 do bỏ overlap; coherence trong mẫu 1.00→1.50. Dev Hit@3 tăng 11/15→12/15; test 2/5→3/5. Đổi cả policy nên chưa tách tác động size và overlap. Chunk B nhiều ý hơn mỗi vector, vẫn có thể mất ngữ cảnh bảng nhiều trang.
+
+B–C cùng vectors, filter nâng dev Hit@1 từ 7/15→8/15; dev Hit@3 cùng 12/15. Test cùng Hit@1=2/5, Hit@3=3/5; coherence cùng 1.50, grounding cùng 1.80. **Không khẳng định C tốt hơn B trên test.** C giữ scope nhưng có thể thiếu slot top3 như T05, chỉ áp khi scope input đáng tin.
+
+- **D10, A, kpi-v2/trang gốc 17:** gold offsets 412–533; top-3 trang[106,17,106]. Chunk trang 17 ở 451–740 thiếu đầu quote; các cửa sổ 500/overlap 50 không chứa toàn bộ quote trong một chunk. Trang 106 có nội dung gần nhưng **D10/trang106 vẫn PENDING**, chưa được user xác nhận riêng, không thêm gold hay sửa hit.
+- **D01, A, kpi-v2/trang gốc 7:** top-3 trang[93,106,105], không có trang 7 gold. Có nội dung liên quan ở trang khác nên cần phân biệt retrieval miss và thiếu alternate annotation; chưa đủ approval để gọi hit. Giữ nguyên lỗi proxy, chỉ phân tích định tính.
+
+Hai case có trace thật; không công bố question/evidence nguyên văn. IDs/pages/offsets ở failure_summary.json. Rủi ro boundary và nhãn exact-quote không chứng minh mọi hit ngoài gold đều sai về nghĩa.
+
+### 4.2. Giới hạn và khả năng tái lập
+
+**78 chunk ứng viên chỉ phân tích định tính**; không thêm vào gold chính thức hoặc hồi tố test. D10/trang106 còn PENDING là giới hạn được công bố, không chặn nộp phép đo đã khóa. Test 5 câu: một câu tương ứng 20 điểm phần trăm; cùng tài liệu/người chấm có nguy cơ thiên lệch, không suy rộng chiến lược tốt nhất tổng quát.
+
+Extraction được chấp nhận với 29 warnings giữ nguyên; bảng nối trang, reading order, raster và fallback còn giới hạn. Metadata là technical verification được user chấp nhận, không phải independent manual audit. **Public checkout đơn lẻ không tái lập full benchmark** do nguồn hạn chế. Người chấm được xem nguồn theo quyền riêng, đối chiếu trực tiếp local theo data/ACCESS.md; không tự upload/gửi dữ liệu cho bên khác.
+
+Manifest/benchmark/experiment_log/results gốc giữ các cờ review lịch sử trước khi user chấp nhận; human_review_summary.json, manual_evaluation_summary.csv và submission_readiness.json ghi kết luận hiện hành. Source/gold/traces/file chấm/gói approvals giữ local, không commit. Không suy ra extraction không lỗi hoặc quyền công bố từ quyết định chấp nhận pipeline.
+
+### 4.3. Lựa chọn chiến lược và việc cải tiến
+
+**Giữ C theo tiêu chí dev đã khóa**, không chọn lại theo test. B/C có cùng test và grounding; C phù hợp scope input hợp lệ, B dùng chính vectors đó khi không có scope. Chấp nhận trade-off độ phủ sau lọc và slot N/A. Nếu mở rộng: thử paragraph/table-aware extraction trên dev trong thí nghiệm mới, thêm source context, holdout mới lớn hơn; giữ lịch sử hiện tại.
+
+User-confirmed: 20 gold, 30 coherence, 15 grounding. User-accepted technical: 44 metadata. User-accepted with limits: extraction 29 warning pages. Chưa xác nhận riêng: D10/trang106 và alternative candidates, chỉ định tính. Codex hỗ trợ code/câu hỏi/phân tích; OpenRouter chỉ embeddings. Phân biệt score người dùng và nhận xét AI; không tạo dữ liệu/vector/nhãn/chi phí giả.
+
+Hồ sơ **READY cho nộp local với giới hạn và quyền hợp lệ**, chưa push. Khác biệt metadata technical verification so với manual audit do người chấm đánh giá rubric. Quyền công bố dữ liệu nội bộ và push chưa được cấp.
 '''
     target=root/'report/individual/2A202603606_NguyenBinhAn.md'
     target.write_text(report,encoding='utf-8')
-    print(f'Wrote source-free report: {target.name}; status PARTIAL/PENDING_HUMAN')
+    print(f'Final report generated: {target.name}; no experiment mutation or API calls')

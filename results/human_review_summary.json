@@ -1,5 +1,5 @@
 {
-  "status": "PARTIAL_HUMAN_REVIEW",
+  "status": "FINAL_REVIEW_ACCEPTED_WITH_LIMITATIONS",
   "confirmation_date": "2026-11-13",
   "label_origin": "USER_CONFIRMED",
   "approval_packet_sha256": "f6854007ee6045158d1829c30227863b04f650ea3d39dc8b14714eb85f842aab",
@@ -7,7 +7,7 @@
   "gold": {
     "confirmed": 20,
     "total": 20,
-    "alternatives_status": "PENDING_HUMAN"
+    "alternatives_status": "QUALITATIVE_ONLY_NO_RETROSPECTIVE_RESCORING"
   },
   "reason_origin": "Scores/evidence support confirmed by user; AI-proposed explanations are not user-authored or human-confirmed explanations",
   "coherence": {
@@ -89,14 +89,44 @@
   "metadata": {
     "rows": 44,
     "human_confirmed": 0,
-    "status": "PENDING_HUMAN",
+    "status": "USER_ACCEPTED_TECHNICAL_VERIFICATION",
     "technical_source_trace_matches": 44,
-    "technical_database_matches": 44
+    "technical_database_matches": 44,
+    "user_accepted_technical": 44,
+    "by_strategy": {
+      "A": {
+        "accepted": 15,
+        "total": 15
+      },
+      "B": {
+        "accepted": 15,
+        "total": 15
+      },
+      "C": {
+        "accepted": 14,
+        "total": 14
+      }
+    },
+    "independent_human_scoring": false,
+    "fields": [
+      "document_id",
+      "source",
+      "page",
+      "pdf_page",
+      "original_page",
+      "section",
+      "chunk text"
+    ],
+    "rubric_method_limit": "Accepted technical verification; not independent manual per-chunk audit"
   },
   "gold_alternatives": {
     "questions_pending": 20,
     "human_confirmed": 0,
-    "status": "PENDING_HUMAN"
+    "status": "QUALITATIVE_ONLY_NO_RETROSPECTIVE_RESCORING",
+    "candidate_chunks": 78,
+    "official_additions": 0,
+    "D10_page106_status": "PENDING",
+    "submission_blocker": false
   },
   "extraction": {
     "warning_pages": 29,
@@ -107,7 +137,22 @@
       93,
       94
     ],
-    "status": "PENDING_HUMAN"
+    "status": "USER_ACCEPTED_WITH_DISCLOSED_LIMITATIONS",
+    "table_reading_order_warning_pages": 28,
+    "parser_fallback_original_pages": [
+      12,
+      13,
+      93
+    ],
+    "warning_pages_retained": 29,
+    "all_pages_human_verified": false,
+    "error_free_claim": false
   },
-  "retrieval_policy": "Original exact-quote metrics, traces, benchmark and A/B/C unchanged; no alternate-gold rescoring or embedding calls"
+  "retrieval_policy": "Original exact-quote metrics, traces, benchmark and A/B/C unchanged; no alternate-gold rescoring or embedding calls",
+  "final_decision_sha256": "53eab956fa7a13f2e9d7438e30545ccea786db3eaa5476d9dc61d5e5cbb13a87",
+  "permissions": {
+    "reviewer_source_access": "USER_AUTHORIZED_PRIVATE_VIEW",
+    "public_source_gold_trace_release": false,
+    "push_authorized": false
+  }
 }

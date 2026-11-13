@@ -1,4 +1,4 @@
-strategy,coherence_n,coherence_sum,coherence_mean_out_of_2,grounding_n,grounding_sum,grounding_mean_out_of_2,grounding_0,grounding_1,grounding_2,label_origin,metadata_status
-A,10,10,1.00,5,9,1.80,0,1,4,USER_CONFIRMED,PENDING_HUMAN
-B,10,15,1.50,5,9,1.80,0,1,4,USER_CONFIRMED,PENDING_HUMAN
-C,10,15,1.50,5,9,1.80,0,1,4,USER_CONFIRMED,PENDING_HUMAN
+strategy,coherence_n,coherence_sum,coherence_mean_out_of_2,grounding_n,grounding_sum,grounding_mean_out_of_2,grounding_0,grounding_1,grounding_2,label_origin,metadata_accepted_n,metadata_total,metadata_status,metadata_independently_human_scored
+A,10,10,1.00,5,9,1.80,0,1,4,USER_CONFIRMED,15,15,USER_ACCEPTED_TECHNICAL_VERIFICATION,False
+B,10,15,1.50,5,9,1.80,0,1,4,USER_CONFIRMED,15,15,USER_ACCEPTED_TECHNICAL_VERIFICATION,False
+C,10,15,1.50,5,9,1.80,0,1,4,USER_CONFIRMED,14,14,USER_ACCEPTED_TECHNICAL_VERIFICATION,False
