@@ -71,7 +71,7 @@ def generate(root: Path):
 
 ## Phân tích và kết luận
 
-- So sánh A–B và B–C; 2 ví dụ sai có ID câu và nguồn: B giảm 202→104 chunk, coherence tăng 1.00→1.50; test Hit@3 tăng 2/5→3/5 so với A. C tăng dev Hit@1 từ 7/15→8/15 so với B, nhưng test B/C giống nhau. D10/A, `kpi-v2` trang 17: chunk trả về thiếu đầu quote; D10/trang106 vẫn PENDING, không thêm vào gold. D01/A, `kpi-v2` trang 7: top-3 tại trang 93/106/105, không có trang gold nên không tính hit.
+- So sánh A–B và B–C; 2 ví dụ sai có ID câu và nguồn: B giảm 202→104 chunk, coherence tăng 1.00→1.50; test Hit@3 tăng 2/5→3/5 so với A. C tăng dev Hit@1 từ 7/15→8/15 so với B, nhưng test B/C giống nhau. D10/A, `kpi-v2` trang 17: chunk trả về thiếu đầu quote; D10/trang106 đã được xác nhận là bằng chứng tương đương, nhưng không thêm vào gold hoặc tính lại metric. D01/A, `kpi-v2` trang 7: top-3 tại trang 93/106/105, không có trang gold nên không tính hit.
 - Chiến lược chọn, đánh đổi, điều kiện áp dụng: Giữ C theo tiêu chí dev; dùng khi scope đáng tin, không có scope thì tương đương B. Filter có thể giảm số kết quả; không khẳng định C tốt hơn B trên test.
 - Hạn chế của dữ liệu, nhãn, test nhỏ, đo thời gian/chi phí: Một tài liệu, chỉ 5 test, có nội dung lặp; metadata là kiểm chứng kỹ thuật được chấp nhận, khác manual audit độc lập. Giữ 29 cảnh báo extraction; 78 candidate chunks chỉ định tính, không hồi tố test. Thời gian đo một lượt, không kiểm định thống kê; chi phí là provider-reported usage. Public checkout không chứa dữ liệu hạn chế nên cần quyền xem riêng để kiểm chứng.
 - Nếu làm lại hoặc mở rộng, cải tiến gì? Thử chunking nhận biết bảng/đoạn, giữ ngữ cảnh bảng nối trang; bổ sung gold thay thế sau xác minh và đánh giá trên holdout mới lớn hơn. Không thay đổi phép đo đã khóa hiện tại.

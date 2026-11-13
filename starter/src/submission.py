@@ -95,7 +95,7 @@ def validate(root=ROOT):
     if sum(r['usage']['prompt_tokens'] for r in ledger)!=usage['measured_prompt_tokens'] or not math.isclose(sum(r['usage']['cost'] for r in ledger),usage['provider_reported_cost_usd'],abs_tol=1e-12):
         raise ValueError('Usage summary/ledger mismatch')
     report=(root/'report/individual/2A202603606_NguyenBinhAn.md').read_text(encoding='utf-8')
-    if 'USER_ACCEPTED_TECHNICAL_VERIFICATION' not in report or 'D10/trang106 vẫn PENDING' not in report:
+    if 'USER_ACCEPTED_TECHNICAL_VERIFICATION' not in report or 'D10/trang106 đã được xác nhận' not in report:
         raise ValueError('Final report misses acceptance provenance or alternate limit')
     for r in metrics:
         if f"{r['hit_at_1_n']}/{r['n']}" not in report or f"{r['evidence_hit_at_3_n']}/{r['n']}" not in report:
@@ -149,7 +149,7 @@ def validate(root=ROOT):
             'reproducibility_and_report':'PRESENT_WITH_RESTRICTED_CORPUS_ACCESS'},
         'limitations':['Metadata accepted technical verification, not independent manual per-chunk scoring; rubric credit is grader decision',
             '29 extraction-warning pages retained, not exhaustively human-verified','Public checkout lacks restricted source/gold/full traces',
-            '78 alternate chunks qualitative only; D10/page106 remains PENDING and not official gold','Test set has only five questions'],
+            'D10/page106 source passage confirmed as equivalent; not added to frozen official gold and no retrospective rescoring; other candidates qualitative only','Test set has only five questions'],
         'reviewer_access':'User authorized private source viewing; see data/ACCESS.md',
         'source_gold_trace_publication_authorized':False,'push_authorized':False,
         'final_report':'report/individual/2A202603606_NguyenBinhAn.md'}

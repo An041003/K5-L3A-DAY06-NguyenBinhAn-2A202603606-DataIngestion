@@ -122,7 +122,7 @@ def aggregate_human_review(root):
             raise ValueError('Do not clear or human-verify unreviewed extraction pages')
         if final['extraction']['status']!='USER_ACCEPTED_WITH_DISCLOSED_LIMITATIONS' or final['extraction']['all_pages_human_verified'] is not False:
             raise ValueError('Extraction acceptance must preserve disclosed limits')
-        if final['alternative_gold']['official_additions']!=0 or final['alternative_gold']['D10_page106_status']!='PENDING':
+        if final['alternative_gold']['official_additions']!=0 or final['alternative_gold']['D10_page106_status'] not in ('PENDING','USER_CONFIRMED_EQUIVALENT_EVIDENCE'):
             raise ValueError('Unconfirmed alternate evidence cannot become official gold')
         summary['status'] = 'FINAL_REVIEW_ACCEPTED_WITH_LIMITATIONS'
         summary['final_decision_sha256'] = digest(final_path.read_bytes())
@@ -133,7 +133,12 @@ def aggregate_human_review(root):
             table_reading_order_warning_pages=28,parser_fallback_original_pages=fallback_pages,
             warning_pages_retained=29,all_pages_human_verified=False,error_free_claim=False)
         summary['gold_alternatives'].update(status='QUALITATIVE_ONLY_NO_RETROSPECTIVE_RESCORING',
-            candidate_chunks=78,official_additions=0,D10_page106_status='PENDING',submission_blocker=False)
+            candidate_chunks=78,official_additions=0,D10_page106_status=final['alternative_gold']['D10_page106_status'],submission_blocker=False)
+        if final['alternative_gold']['D10_page106_status']=='USER_CONFIRMED_EQUIVALENT_EVIDENCE':
+            summary['gold_alternatives'].pop('questions_pending',None)
+            summary['gold_alternatives'].update(human_confirmed=1,human_confirmed_source_passages=1,
+                confirmation_scope='D10 source passage original_page106/pdf_page37; not blanket approval of truncated retrieved chunks',
+                other_candidates='QUALITATIVE_ONLY_UNCONFIRMED',metrics_rescored=False)
         summary['gold']['alternatives_status'] = summary['gold_alternatives']['status']
         summary['permissions'] = final['permissions']
     return summary

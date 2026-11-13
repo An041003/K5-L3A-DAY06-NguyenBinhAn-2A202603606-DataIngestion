@@ -120,13 +120,16 @@
     "rubric_method_limit": "Accepted technical verification; not independent manual per-chunk audit"
   },
   "gold_alternatives": {
-    "questions_pending": 20,
-    "human_confirmed": 0,
+    "human_confirmed": 1,
     "status": "QUALITATIVE_ONLY_NO_RETROSPECTIVE_RESCORING",
     "candidate_chunks": 78,
     "official_additions": 0,
-    "D10_page106_status": "PENDING",
-    "submission_blocker": false
+    "D10_page106_status": "USER_CONFIRMED_EQUIVALENT_EVIDENCE",
+    "submission_blocker": false,
+    "human_confirmed_source_passages": 1,
+    "confirmation_scope": "D10 source passage original_page106/pdf_page37; not blanket approval of truncated retrieved chunks",
+    "other_candidates": "QUALITATIVE_ONLY_UNCONFIRMED",
+    "metrics_rescored": false
   },
   "extraction": {
     "warning_pages": 29,
@@ -149,7 +152,7 @@
     "error_free_claim": false
   },
   "retrieval_policy": "Original exact-quote metrics, traces, benchmark and A/B/C unchanged; no alternate-gold rescoring or embedding calls",
-  "final_decision_sha256": "53eab956fa7a13f2e9d7438e30545ccea786db3eaa5476d9dc61d5e5cbb13a87",
+  "final_decision_sha256": "d6ac9daf57ed979346171aa3203869c137ea5afb6264db365d7c7f34af9c2c68",
   "permissions": {
     "reviewer_source_access": "USER_AUTHORIZED_PRIVATE_VIEW",
     "public_source_gold_trace_release": false,

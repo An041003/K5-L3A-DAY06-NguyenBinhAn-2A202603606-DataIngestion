@@ -53,7 +53,7 @@ Dùng cùng dữ liệu, model và câu hỏi cho cả ba cấu hình. Tách **1
 - 20 gold chính, 30 coherence, 15 grounding: USER_CONFIRMED. Coherence A=1.00/2, B=C=1.50/2; grounding A=B=C1.80/2 trên đủ 5 test.
 - Metadata:44/44 đối chiếu kỹ thuật được user chấp nhận, **USER_ACCEPTED_TECHNICAL_VERIFICATION**; A=15/15, B=15/15, C=14/14. Không tuyên bố người dùng tự chấm độc lập từng chunk. Khác biệt với phương pháp manual audit trong GUIDE được công bố, người chấm đánh giá mức rubric.
 - Extraction: USER_ACCEPTED_WITH_DISCLOSED_LIMITATIONS; giữ 29 warning pages, 28 reading-order pages và fallback 12/13/93. Không coi29 trang đã human-verified hoặc extraction không lỗi.
-- 78 candidate chunks chỉ định tính; không thêm alternative gold hoặc hồi tố metrics. D10/trang106 vẫn PENDING.
+- D10/trang106 đã được người dùng xác nhận là bằng chứng tương đương. Không thêm vào gold hoặc hồi tố metrics; các candidate khác chỉ định tính.
 
 ### Setup (PowerShell, từ repo root)
 

@@ -25,13 +25,14 @@ class HumanReviewTests(unittest.TestCase):
 
     def test_technical_acceptance_is_not_independent_human_verification(self):
         summary=aggregate_human_review(ROOT)
-        for kind in ('metadata','gold_alternatives','extraction'):
+        for kind in ('metadata','extraction'):
             self.assertEqual(summary[kind]['human_confirmed'],0)
         self.assertEqual(summary['metadata']['status'],'USER_ACCEPTED_TECHNICAL_VERIFICATION')
         self.assertEqual(summary['metadata']['user_accepted_technical'],44)
         self.assertFalse(summary['metadata']['independent_human_scoring'])
         self.assertEqual(summary['extraction']['status'],'USER_ACCEPTED_WITH_DISCLOSED_LIMITATIONS')
-        self.assertEqual(summary['gold_alternatives']['D10_page106_status'],'PENDING')
+        self.assertEqual(summary['gold_alternatives']['D10_page106_status'],'USER_CONFIRMED_EQUIVALENT_EVIDENCE')
+        self.assertEqual(summary['gold_alternatives']['human_confirmed_source_passages'],1)
         self.assertEqual(summary['gold_alternatives']['official_additions'],0)
         self.assertEqual(summary['metadata']['rows'],44)
         self.assertEqual(summary['metadata']['technical_source_trace_matches'],44)

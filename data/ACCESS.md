@@ -14,4 +14,4 @@ Người chấm liên hệ tác giả để kiểm chứng trực tiếp trên m
 
 Public checkout đơn lẻ thiếu nguồn, gold và trace nên không tái lập full benchmark. Đây là giới hạn công bố theo SUBMISSION.md; không dùng data giả để lấp chỗ thiếu. Nếu giảng viên cần nhận bản sao thay vì xem riêng, phải xác định quyền/phương thức chia sẻ hợp lệ trước; tác vụ hiện tại không tự thực hiện việc chuyển tài liệu.
 
-D10/trang106 và78candidate chunks chỉ phân tích định tính, chưa được thêm vào gold và không làm thay đổi test hồi tố. C/T05 có2hit hợp lệ, rank 3 N/A; không có bản ghi thứ ba bị giấu hoặc tạo thay thế.
+D10/trang106 được người dùng xác nhận là bằng chứng tương đương ở mức đoạn nguồn; không tự coi mọi chunk A bị cắt là đầy đủ. Không thêm vào gold đã khóa hoặc thay đổi test hồi tố; các candidate khác chỉ phân tích định tính. C/T05 có2hit hợp lệ, rank 3 N/A; không tạo kết quả thay thế.
