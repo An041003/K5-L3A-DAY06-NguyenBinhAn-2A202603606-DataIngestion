@@ -4,11 +4,40 @@ import json
 import statistics
 from pathlib import Path
 from .io_utils import read_jsonl, write_json
+from .human_review import aggregate_human_review
 
 
 def generate(root: Path):
     private = root/'.agents'
     results = root/'results'
+    human = aggregate_human_review(root)
+    if human:
+        write_json(results/'human_review_summary.json',human)
+        with (results/'manual_evaluation_summary.csv').open('w',encoding='utf-8',newline='') as f:
+            fields=['strategy','coherence_n','coherence_sum','coherence_mean_out_of_2','grounding_n','grounding_sum','grounding_mean_out_of_2','grounding_0','grounding_1','grounding_2','label_origin','metadata_status']
+            writer=csv.DictWriter(f,fieldnames=fields)
+            writer.writeheader()
+            for s in ('A','B','C'):
+                c,g=human['coherence'][s],human['grounding'][s]
+                writer.writerow({'strategy':s,'coherence_n':c['n'],'coherence_sum':c['sum'],'coherence_mean_out_of_2':f"{c['mean']:.2f}",
+                    'grounding_n':g['n'],'grounding_sum':g['sum'],'grounding_mean_out_of_2':f"{g['mean']:.2f}",
+                    **{f'grounding_{i}':g['distribution'][str(i)] for i in (0,1,2)},
+                    'label_origin':'USER_CONFIRMED','metadata_status':'PENDING_HUMAN'})
+    coherence_labels={s:f"{human['coherence'][s]['mean']:.2f} (n={human['coherence'][s]['n']})" if human else 'PENDING_HUMAN' for s in ('A','B','C')}
+    grounding_labels={s:f"{human['grounding'][s]['mean']:.2f}; 0/1/2: "+'/'.join(str(human['grounding'][s]['distribution'][str(i)]) for i in (0,1,2)) if human else 'PENDING_HUMAN' for s in ('A','B','C')}
+    gold_note=('**20/20 gold evidence chính đã được người dùng xác nhận ngày '+human['confirmation_date']+'**, lưu trong review overlay `.agents/review/gold_review.csv`. Các trường question/evidence/source/page và split của benchmark đã khóa không đổi. Các cờ human_verified=false trong benchmark/trace, manifest ban đầu và trạng thái PROVISIONAL_PENDING_HUMAN_GOLD trong metrics là snapshot trước xác nhận, được giữ nguyên; trạng thái review mới ở `results/human_review_summary.json`. Alternative gold cho cả 20 câu vẫn PENDING_HUMAN.'
+        if human else 'AI soạn từ nguồn thật; human_verified=false, gold còn PENDING_HUMAN.')
+    review_note=('Người dùng đã xác nhận **30 coherence + 15 grounding**; điểm được tính từ từng nhãn, không suy ra từ text proxy. Nhãn score/evidence support là do người dùng duyệt; một số lý do trong CSV là AI đề xuất, **không coi là nhận xét do tác giả tự viết hoặc đã duyệt lý do**. Metadata 44 dòng và extraction/alternate gold vẫn PENDING_HUMAN.'
+        if human else 'Toàn bộ nhãn người chấm còn PENDING_HUMAN.')
+    approved_detail=('Coherence: cùng 10 vị trí nguồn trên 10 trang đầu, offset min(200, len−1), chọn chunk đầu tiên bao phủ vị trí. Grounding có đủ **5 câu test T01–T05 cho mỗi strategy**; T01=1, T02–T05=2 theo người dùng xác nhận, tổng 9/5=**1.80/2**, phân bố 0:0, 1:1, 2:4. Coherence A tổng 10/10=**1.00/2**, B/C tổng 15/10=**1.50/2**.'
+        if human else 'Coherence và grounding chưa có gói nhãn người dùng được xác minh: PENDING_HUMAN; không tự điền điểm.')
+    coherence_analysis=('Nhãn người dùng trên cùng 10 vị trí cho thấy A=1.00/2, B=C=1.50/2. Trong mẫu này B/C cao hơn A 0.50 điểm; chưa suy rộng ngoài 10 vị trí và không khẳng định xử lý trọn bảng qua nhiều trang.'
+        if human else 'Điểm coherence PENDING_HUMAN; độ dài/boundary chunk không thay nhãn người chấm.')
+    grounding_analysis=('Người dùng xác nhận A=B=C=1.80/2 trên đủ 5 test, T01=1 và bốn câu còn lại=2. Đây là đánh giá độ đủ của top-3 evidence, không phải độ đúng câu trả lời LLM. Có thể khác exact-quote proxy vì xét ngữ cảnh và cách diễn đạt tương đương; xác nhận grounding không đồng nghĩa duyệt thêm alternative gold để tính lại retrieval.'
+        if human else 'Grounding PENDING_HUMAN; exact quote proxy không thay nhãn người chấm.')
+    approved_count=sum(human[k][s]['n'] for k in ('coherence','grounding') for s in ('A','B','C')) if human else 0
+    primary_gold_status='Gold chính đã được xác nhận' if human else 'Gold chính PENDING_HUMAN'
+    approved_scope='Đã xác nhận 20 gold chính + 30 coherence + 15 grounding; không tiếp tục ghi các mục này là chờ duyệt.' if human else 'Gold/coherence/grounding còn PENDING_HUMAN.'
     def read(path, default=None):
         return json.loads(path.read_text(encoding='utf-8')) if path.exists() else default
     manifest = read(root/'data/manifest.json')
@@ -113,7 +142,7 @@ def generate(root: Path):
 
 Học viên: **NguyenBinhAn — 2A202603606 — L3A** (theo tên repo được người dùng cung cấp; dấu tiếng Việt của họ tên: PENDING_USER).
 
-Trạng thái: **PARTIAL — PENDING_HUMAN**. {'A/B/C đã chạy đủ; số đo dưới đây là kết quả kỹ thuật tạm thời trên gold do AI soạn, chưa được người dùng duyệt.' if complete else 'Retrieval benchmark NOT_RUN; chưa được phép gửi question text tới provider. Đã hoàn thành các phần offline và embedding document được phép.'} Chưa đủ điều kiện tuyên bố hoàn tất rubric hoặc nộp chính thức. Không push.
+Trạng thái: **PARTIAL — PENDING_HUMAN**. {'A/B/C đã chạy đủ; benchmark/retrieval metrics/trace và cấu hình được giữ nguyên.' if complete else 'Retrieval benchmark NOT_RUN.'} {review_note} Chưa đủ điều kiện tuyên bố hoàn tất rubric hoặc nộp chính thức. Không push.
 
 ## Dữ liệu và pipeline
 
@@ -149,13 +178,13 @@ A–B thay chính sách chunking (kích thước, overlap và boundary packing �
 
 ## Benchmark và cách đánh giá
 
-**20 câu, 15 dev/5 test**, gồm hỏi trực tiếp, paraphrase, điều kiện/ngoại lệ; **5 câu filter, 2 câu filter test**. AI soạn từ các trang thật trước retrieval, kiểm tra exact span của evidence và filter khớp chapter nguồn; `human_verified=false`. Draft gold ở `.agents/benchmark/questions.jsonl`; bản duyệt ở `.agents/review/gold_review.csv`, hiện **PENDING_HUMAN**. Chưa chứng minh gold có đủ mọi nguồn tương đương; reviewer phải bổ sung các gold thay thế hợp lệ.
+**20 câu, 15 dev/5 test**, gồm hỏi trực tiếp, paraphrase, điều kiện/ngoại lệ; **5 câu filter, 2 câu filter test**. AI soạn từ các trang thật trước retrieval, kiểm tra exact span của evidence và filter khớp chapter nguồn. {gold_note} Không thêm gold alternative hoặc tính lại retrieval metric khi chưa được duyệt.
 
 Split theo chủ đề: dev phần quy tắc/quyền/yêu cầu/kiến trúc; test API conventions và vận hành/nghiệm thu. Một tài liệu dùng chung từ vựng, điều kiện có thể lặp; đây không phải holdout độc lập theo tài liệu. Không retune theo kết quả test. Question filter nói rõ chapter scope từ trước retrieval; A/B vẫn thấy cùng question text, C mới áp lọc SQL. Vì câu hỏi đã chứa ngữ cảnh chapter nên mức lợi ích filter có thể nhỏ.
 
-Hash bộ benchmark trước retrieval: `{frozen['benchmark_sha256']}`; thời điểm lock `{frozen['at']}`. Tiêu chí chọn đã khóa: **dev Evidence Hit@3 → dev Hit@1 → ít chunk lưu hơn → thứ tự strategy**. Lựa chọn được ghi trước test retrieval tại `.agents/results/selection_before_test.json`; lựa chọn tạm thời: **{selection.get('selected','NOT_RUN')}**. Chưa dùng coherence/grounding người chấm để ra kết luận cuối.
+Hash bộ benchmark trước retrieval: `{frozen['benchmark_sha256']}`; thời điểm lock `{frozen['at']}`. Tiêu chí chọn đã khóa: **dev Evidence Hit@3 → dev Hit@1 → ít chunk lưu hơn → thứ tự strategy**. Lựa chọn được ghi trước test retrieval tại `.agents/results/selection_before_test.json`; lựa chọn tạm thời: **{selection.get('selected','NOT_RUN')}**. Nhãn người dùng xác nhận sau thí nghiệm dùng để báo cáo, không dùng chọn lại cấu hình theo test.
 
-Proxy kỹ thuật: cùng source_id/trang gốc và **toàn bộ evidence_quote** sau normalize whitespace nằm trong một chunk. Chấp nhận bất kỳ gold alternative đã khai báo. Hit@1 = số top-1 hit/N; Evidence Hit@3 = số câu có ≥1 hit trong top-3/N. Không coi việc khớp một đoạn ngắn, chỉ đúng trang, hợp evidence từ nhiều chunk, hoặc nhãn AI là nhãn người. Khi gold chưa duyệt, các chỉ số sau **không phải độ chính xác cuối cùng**.
+Proxy kỹ thuật: cùng source_id/trang gốc và **toàn bộ evidence_quote** sau normalize whitespace nằm trong một chunk. Hit@1 = số top-1 hit/N; Evidence Hit@3 = số câu có ≥1 hit trong top-3/N. Các giá trị dưới đây giữ nguyên phép đo exact-quote ban đầu trên gold chính; alternative evidence chưa xác nhận nên chưa đánh giá đầy đủ các nguồn tương đương. Không suy retrieval hit từ điểm grounding người dùng và không tính lại các chỉ số sau merge xác nhận.
 
 ## Kết quả đo thật
 
@@ -169,33 +198,35 @@ Ingest đầu tiên: A **{ingest['A']['ingest_seconds']:.3f}s**, B **{ingest['B'
 
 | Strategy | Coherence /2 (10 vị trí) | Metadata đủ/đúng (số bản ghi thực) | Filter compliance | Grounding /2 (5 câu) |
 |---|---|---|---|---|
-| A | PENDING_HUMAN | PENDING_HUMAN (15) | N/A (không áp lọc); quan sát scope 2/2 | PENDING_HUMAN |
-| B | PENDING_HUMAN | PENDING_HUMAN (15) | N/A (không áp lọc); quan sát scope 1/2 | PENDING_HUMAN |
-| C | PENDING_HUMAN | PENDING_HUMAN (14) | 2/2 scope trên hit thực; 1/2 đủ ba hit | PENDING_HUMAN |
+| A | {coherence_labels['A']} | PENDING_HUMAN (15) | N/A (không áp lọc); quan sát scope 2/2 | {grounding_labels['A']} |
+| B | {coherence_labels['B']} | PENDING_HUMAN (15) | N/A (không áp lọc); quan sát scope 1/2 | {grounding_labels['B']} |
+| C | {coherence_labels['C']} | PENDING_HUMAN (14) | 2/2 scope trên hit thực; 1/2 đủ ba hit | {grounding_labels['C']} |
 
-Coherence: cùng 10 vị trí nguồn trên 10 trang đầu, offset min(200, len−1), chọn chunk đầu tiên bao phủ vị trí; chấm 0/1/2 và lý do. Metadata: mục tiêu tối đa 45 bản ghi test, thực nhận **{test_metadata_records}**; grounding: 5 test×3 =15 mẫu. Có **{audit_count} mẫu có thể chấm**, cộng 1 dòng ghi thiếu kết quả (NOT_APPLICABLE) trong `.agents/review/manual_audit_template.csv`. Riêng C/T05 chỉ có 2 chunk B thuộc section được yêu cầu, nên không có kết quả thứ ba; không nhân đôi hoặc tạo giả để đủ top-3. Filter compliance trên các kết quả thực nhận là 2/2 query C; full-top-3 scope compliance là 1/2. Đây là giới hạn độ phủ của corpus/chunking, không có hit ngoài scope. **Không có điểm trung bình người chấm do AI điền**. Cần tác giả xác nhận và ghi nguy cơ thiên lệch.
+{approved_detail} {review_note}
+
+Metadata: mục tiêu tối đa 45 bản ghi test, thực nhận **{test_metadata_records}**. Có **{audit_count} mẫu có thể chấm**, cộng 1 dòng thiếu kết quả NOT_APPLICABLE. Trong đó đã duyệt **{approved_count} nhãn coherence/grounding**; 44 nhãn metadata còn chờ. C/T05 chỉ có 2 chunk B trong scope; không thêm hit giả. Filter scope trên hit thực nhận 2/2 query C; full-top-3 scope 1/2. Đối chiếu tự động source/trace: **{human['metadata']['technical_source_trace_matches'] if human else 'NOT_RUN'}/44**, dòng PostgreSQL: **{human['metadata']['technical_database_matches'] if human else 'NOT_RUN'}/44**, nhưng **chưa công bố tỷ lệ metadata đúng/đủ do người chấm**. Review riêng: `.agents/review/metadata_review_44.csv`. Rủi ro thiên lệch do tự chấm và mẫu nhỏ vẫn có.
 
 Trace đầy đủ (text, score, metadata, filters, gold, proxy từng câu) giữ local `.agents/results/traces.jsonl` (**{len(traces)} dòng, {returned_records} chunk records**; tối đa 180). Public repo chỉ có metrics tổng hợp, thống kê, hash và failure ID/trang; người chấm cần quyền riêng để xem nguồn/evidence. Không publish nội dung KPI để làm đủ checklist.
 
 ## Năm khía cạnh và phân tích
 
-1. **Retrieval accuracy:** bảng trên tách dev/test, hiển thị tử/mẫu và %. Mẫu test chỉ 5 câu; mỗi câu đổi kết quả làm thay đổi 20 điểm phần trăm. Proxy chưa thay gold đã duyệt.
-2. **Chunk coherence:** B giữ boundary dòng/đoạn và nhiều ngữ cảnh hơn A nhưng có thể vẫn cắt cấu trúc bảng nhiều trang. Điểm thực tế PENDING_HUMAN, chưa kết luận B mạch lạc hơn chỉ từ độ dài.
+1. **Retrieval accuracy:** bảng trên giữ nguyên dev/test và số tử/mẫu. Test 5 câu: mỗi câu làm thay đổi 20 điểm phần trăm. {primary_gold_status}; việc tìm/duyệt evidence tương đương còn chờ, không tự sửa Hit@1/Hit@3.
+2. **Chunk coherence:** {coherence_analysis}
 3. **Metadata usefulness:** original_page/pdf_page giúp mở đúng trang nguồn; section giúp giới hạn phạm vi trong SQL. Hạn chế: chapter khá rộng, trích đoạn không liên tục và headings có thể bắt đầu giữa trang; scope sai sẽ loại evidence đúng. Mechanical compliance không chứng minh metadata đúng hay hữu ích về nghĩa.
-4. **Grounding quality:** đang đánh giá evidence retrieval, không gọi LLM sinh đáp án. Mean/phân bố 0/1/2 PENDING_HUMAN; exact quote chỉ là proxy hỗ trợ reviewer.
+4. **Grounding quality:** {grounding_analysis}
 5. **Data strategy impact:** A có 202 chunk, B có 104, giảm **{(1-104/202):.1%}** số dòng/vector; A thêm overlap nên tăng tổng ký tự được gửi. B lớn hơn dễ chứa cả điều kiện nhưng mỗi vector bao phủ nhiều ý. Dev Hit@3 B/C cùng 12/15, hơn A 11/15; C được chọn tạm thời vì dev Hit@1 8/15 so với B 7/15. Test B/C cùng Hit@3 3/5, A 2/5; không có bằng chứng từ mẫu test này cho thấy C tăng Hit@3 so với B. C loại hit ngoài scope ở T05 nhưng chỉ còn hai kết quả. Đọc kết quả cùng manual audit trước quyết định cuối, không thay tham số sau test.
 
 Các case lỗi kỹ thuật đã chạy (nội dung nguồn giữ riêng):
 
 {chr(10).join(cases)}
 
-Phân tích sâu điều kiện còn thiếu và xác nhận bằng chứng tương đương trong các case: PENDING_HUMAN. Không chỉnh tham số hoặc test sau khi thấy các lỗi trên. Muốn sửa chunk/query phải lập thí nghiệm mới trên dev, giữ lịch sử và có holdout mới phù hợp.
+Phân tích sâu và xác nhận alternative gold vẫn PENDING_HUMAN. Đã quét 20 quote trên 42 trang: không có quote giống hệt ở trang khác; 78 chunk ứng viên từ retrieval cũ được gom riêng cho 20 câu để người dùng xem, **chưa phải 78 gold hợp lệ**. Đã kiểm tra tự động 29 trang có cảnh báo; AI xem trực quan trang gốc 12,13,93,94, ghi nhận rủi ro bảng nối trang và sơ đồ raster không nằm đầy đủ trong plain text. Các nhận xét AI không xóa warning hoặc thay xác nhận người dùng. Không đổi processed text/chunk/embeddings/benchmark/trace; không retune hoặc chấm lại retrieval.
 
 ## Tái lập, giới hạn và việc còn chờ
 
 Các lệnh và điều kiện dữ liệu ở README; tests chạy trên corpus thật/cache thật, không download embedding local. Source và benchmark không thể tái lập từ public checkout đơn lẻ khi chưa được cấp quyền; báo cáo công khai ghi rõ giới hạn này. Không giả định artifact tổng hợp đủ cho chấm full rubric.
 
-PENDING: duyệt 20 gold và alternate evidence; chấm {audit_count} mẫu audit và kiểm tra 1 shortfall; kiểm tra thứ tự bảng/đoạn PDF; xác nhận họ tên có dấu; cấp quyền cho người chấm truy cập private source/benchmark/traces; chốt báo cáo sau manual review; người dùng cho phép push/nộp.
+PENDING: **44 metadata**, alternative gold cho 20 câu, xác nhận extraction/reading order, kiểm tra shortfall C/T05, tên có dấu, quyền người chấm truy cập nguồn và quyền công bố/push. {approved_scope} Số tổng hợp mới ở `results/human_review_summary.json` và `results/manual_evaluation_summary.csv`; file chấm chi tiết và gói xác nhận giữ local, không commit.
 
 Công cụ hỗ trợ: Codex soạn code/câu hỏi/phân tích; OpenRouter chỉ tạo embedding. Người dùng phải hiểu code và tự xác minh evidence/nhãn. Không tạo dữ liệu, vector, kết quả, nguồn hoặc nhãn thủ công giả.
 '''

@@ -48,7 +48,7 @@ Dùng cùng dữ liệu, model và câu hỏi cho cả ba cấu hình. Tách **1
 
 ## Bài triển khai cá nhân — NguyenBinhAn, 2A202603606, L3A
 
-Python + OpenRouter `google/gemini-embedding-2`, **768 dimensions** + PostgreSQL 16/pgvector, cosine exact search. A: fixed 500/overlap 50; B: paragraph/line tối đa 1.100 ký tự; C: dùng cùng chunk/vector B, thêm section filter do câu hỏi cung cấp. Không có local/mock embeddings. Trạng thái bài: **PARTIAL, chờ người dùng duyệt gold và audit thủ công**.
+Python + OpenRouter `google/gemini-embedding-2`, **768 dimensions** + PostgreSQL 16/pgvector, cosine exact search. A: fixed 500/overlap 50; B: paragraph/line tối đa 1.100 ký tự; C: dùng cùng chunk/vector B, thêm section filter do câu hỏi cung cấp. Không có local/mock embeddings. Trạng thái: **PARTIAL**; đã xác nhận 20 gold chính, 30 coherence và 15 grounding; còn 44 metadata, alternative gold và extraction chờ duyệt.
 
 ### Cài đặt và chạy
 
@@ -75,7 +75,7 @@ Từ `starter/`, chạy từng bước:
 .venv/Scripts/python -m src.run lock
 # Chỉ dùng --allow-external khi có quyền gửi chunk VÀ question text tới provider.
 .venv/Scripts/python -m src.run ingest --allow-external
-# Gold đang chờ người duyệt: chỉ đo proxy tạm thời, không nhận là human-verified.
+# Lần benchmark ban đầu dùng gold chưa duyệt; cờ của snapshot đó được giữ nguyên.
 .venv/Scripts/python -m src.run benchmark --allow-external --allow-unverified
 .venv/Scripts/python -m src.run report
 ```
@@ -88,6 +88,8 @@ Sau khi các đầu vào đã được cấp quyền và có benchmark local, l�
 
 Model/dimensions/cosine được giữ cố định. Lock kiểm tra hash câu hỏi, cấu hình, chunks và vị trí audit; không sửa để retune test. Dev chọn theo Evidence Hit@3, rồi Hit@1, số chunk, thứ tự strategy; ghi lựa chọn trước test retrieval. Cache local tái sử dụng text trùng và query vectors; C không gọi embedding document riêng. Timeout/401/402/quota/backend lỗi sẽ báo rõ và dừng bước phụ thuộc, không chuyển provider.
 
+Các lệnh ingest/benchmark ở trên mô tả lần chạy thí nghiệm. **Sau khi merge nhãn người dùng, chỉ chạy `python -m src.run report` từ starter để cập nhật báo cáo**, không chạy lại benchmark để cập nhật review. Gói xác nhận và CSV chấm nằm local trong `.agents/review/`; reporter đối chiếu JSON/CSV theo ID/strategy, tính lại số tổng hợp và giữ nguyên benchmark/trace/metrics. Các cờ review cũ trong snapshot thí nghiệm không phản ánh trạng thái xác nhận mới.
+
 ### Kết quả và kiểm chứng
 
 - [Báo cáo cá nhân](report/individual/2A202603606_NguyenBinhAn.md): cấu hình, phép đo, năm khía cạnh, ví dụ lỗi và giới hạn.
@@ -95,8 +97,9 @@ Model/dimensions/cosine được giữ cố định. Lock kiểm tra hash câu h
 - [Backend verification](results/storage_verification.json), [persistence sau restart](results/persistence_verification.json), [runtime](results/run_environment.json), [failure summary](results/failure_summary.json), [search timing](results/search_timing.json).
 - Trace đầy đủ local: `.agents/results/traces.jsonl`; draft gold/review: `.agents/review/gold_review.csv`; 89 mẫu coherence/metadata/grounding và 1 dòng thiếu kết quả: `.agents/review/manual_audit_template.csv`. C/T05 chỉ có 2 chunk thuộc phạm vi lọc, tổng 60 trace có 179 kết quả thực; không tạo hit thứ ba. Không có nhãn người chấm được AI tự điền; chưa commit nguồn, câu hỏi/gold hoặc text trace.
 - [Benchmark manifest](benchmark/manifest.json) ghi split/hash và phạm vi review; [rerun verification](results/reproducibility.json) ghi kiểm tra kết quả lần chạy lại. `ingest_statistics.json` giữ phép đo ingest đầu tiên; `ingest_latest.json` ghi lần nạp lại bằng cache.
+- [Human review hiện tại](results/human_review_summary.json) và [bảng manual evaluation](results/manual_evaluation_summary.csv): coherence A=1.00/2, B=C=1.50/2 (10 vị trí mỗi cấu hình); grounding A=B=C=1.80/2 (đủ 5 test). Điểm do người dùng xác nhận; lý do AI đề xuất không được gán thành nhận xét do tác giả viết. File chấm chi tiết không được công bố.
 
-`Hit@1`/`Evidence Hit@3` hiện là **PROVISIONAL exact-quote proxy trên gold chưa được người dùng duyệt**: phải đúng nguồn/trang và chứa toàn bộ quote trong một chunk. Các nguồn tương đương chưa được xác nhận có thể làm proxy đánh giá thấp; proxy không thay nhãn grounding/coherence. Metadata filter compliance tự động không chứng minh độ đúng metadata thủ công.
+`Hit@1`/`Evidence Hit@3` giữ nguyên **exact-quote proxy của thí nghiệm ban đầu**: phải đúng nguồn/trang và chứa toàn bộ quote trong một chunk. Nay 20 gold evidence chính đã được người dùng xác nhận, còn alternative gold chưa duyệt nên không tự thêm nguồn tương đương hoặc tính lại metric. Cờ PENDING trong metrics/benchmark manifest/trace là lịch sử trước xác nhận; review mới được lưu riêng trong human review summary. Metadata filter compliance tự động không chứng minh độ đúng metadata thủ công.
 
 Chạy technical tests từ repo root (đọc corpus/cache thật, không gọi API):
 

@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "review_status": "PARTIAL_HUMAN_REVIEW",
+  "confirmed_counts": {
+    "gold": 20,
+    "coherence": 30,
+    "grounding": 15
+  },
+  "remaining_unconfirmed": {
+    "metadata_hits": 44,
+    "alternative_gold_questions": 20,
+    "extraction_warning_pages": 29
+  },
+  "protected_original_artifacts": 356,
+  "all_original_artifact_hashes_unchanged": true,
+  "benchmark_sha256": "62026ea23cbc82df48d3c410e6f6879050470df694d5de33fe9bc6eb2e39154c",
+  "new_embedding_requests": 0,
+  "retrieval_metrics_rescored": false,
+  "original_metrics_status_flags": "historical pre-approval flags retained; current approvals in human_review_summary.json",
+  "technical_tests": {
+    "command": "starter/.venv/Scripts/python -m unittest discover -s tests -v",
+    "tests": 20,
+    "failures": 0,
+    "skipped": 0
+  },
+  "reporting_source_sha256_utf8_lf": {
+    "starter/src/reporting.py": "5bfc4ff796deac141b06eb313586445d24445736e2b2f627396cccf2f1e6716c",
+    "starter/src/human_review.py": "fd0dce9e580a417694858f6ec86b7c9bc54d3d81440e9e7ebfe19f2b894c9d5d"
+  },
+  "raw_review_and_packet_publication": "NOT_AUTHORIZED; excluded and not staged"
+}
